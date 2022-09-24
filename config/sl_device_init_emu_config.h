@@ -35,26 +35,11 @@
 
 // <<< Use Configuration Wizard in Context Menu >>>
 
-// <o SL_DEVICE_INIT_EMU_EM4_VSCALE> EM4H Voltage scaling level
-// <emuVScaleEM4H_FastWakeup=> Fast-wakeup voltage level
-// <emuVScaleEM4H_LowPower=> Low-power optimized voltage level
-//<i> Default: emuVScaleEM4H_LowPower
-#define SL_DEVICE_INIT_EMU_EM4_VSCALE            emuVScaleEM4H_LowPower
-
-// <q SL_DEVICE_INIT_EMU_EM4_RETAIN_LFXO> Retain LFXO in EM4
-#define SL_DEVICE_INIT_EMU_EM4_RETAIN_LFXO         0
-
-// <q SL_DEVICE_INIT_EMU_EM4_RETAIN_LFRCO> Retain LFRCO in EM4
-#define SL_DEVICE_INIT_EMU_EM4_RETAIN_LFRCO        0
-
-// <q SL_DEVICE_INIT_EMU_EM4_RETAIN_ULFRCO> Retain ULFRCO in EM4S
-#define SL_DEVICE_INIT_EMU_EM4_RETAIN_ULFRCO       0
-
-// <o SL_DEVICE_INIT_EMU_EM4_STATE> Hibernate or shutoff EM4 state
-// <emuEM4Shutoff=> EM4 Shutoff
-// <emuEM4Hibernate=> EM4 Hibernate
-// <i> Default: emuEM4Shutoff
-#define SL_DEVICE_INIT_EMU_EM4_STATE               emuEM4Shutoff
+// <q> Allow debugger to remain connected in EM2
+// <i> Force PD0B to stay on on EM2 entry. This allows the debugger to remain connected in EM2 and EM3.
+// <i> Enabling debug connectivity results in an increased power consumption in EM2/EM3.
+// <i> Default: 1
+#define SL_DEVICE_INIT_EMU_EM2_DEBUG_ENABLE   1
 
 // <o SL_DEVICE_INIT_EMU_EM4_PIN_RETENTION_MODE> EM4 pin retention mode
 // <emuPinRetentionDisable=> No Retention: Pads enter reset state when entering EM4.

@@ -35,15 +35,15 @@
 
 // <o SL_DEVICE_INIT_LFXO_MODE> Mode
 // <i>
-// <cmuOscMode_Crystal=> Crystal oscillator
-// <cmuOscMode_AcCoupled=> AC-coupled buffer
-// <cmuOscMode_External=> External digital clock
-// <i> Default: cmuOscMode_Crystal
-#define SL_DEVICE_INIT_LFXO_MODE           cmuOscMode_Crystal
+// <cmuLfxoOscMode_Crystal=> Crystal oscillator
+// <cmuLfxoOscMode_AcCoupledSine=> AC-coupled buffer
+// <cmuLfxoOscMode_External=> External digital clock
+// <i> Default: cmuLfxoOscMode_Crystal
+#define SL_DEVICE_INIT_LFXO_MODE           cmuLfxoOscMode_Crystal
 
 // <o SL_DEVICE_INIT_LFXO_CTUNE> CTUNE <0-127>
 // <i> Default: 63
-#define SL_DEVICE_INIT_LFXO_CTUNE          32
+#define SL_DEVICE_INIT_LFXO_CTUNE          37
 
 // <o SL_DEVICE_INIT_LFXO_PRECISION> LFXO precision in PPM <0-65535>
 // <i> Default: 500
@@ -51,17 +51,16 @@
 
 // <o SL_DEVICE_INIT_LFXO_TIMEOUT> Startup Timeout Delay
 // <i>
-// <_CMU_LFXOCTRL_TIMEOUT_2CYCLES=> 2 cycles
-// <_CMU_LFXOCTRL_TIMEOUT_256CYCLES=> 256 cycles
-// <_CMU_LFXOCTRL_TIMEOUT_1KCYCLES=> 1K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_2KCYCLES=> 2K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_4KCYCLES=> 4K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_8KCYCLES=> 8K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_16KCYCLES=> 16K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_32KCYCLES=> 32K cycles
-// <_CMU_LFXOCTRL_TIMEOUT_DEFAULT=> Default
-// <i> Default: _CMU_LFXOCTRL_TIMEOUT_DEFAULT
-#define SL_DEVICE_INIT_LFXO_TIMEOUT           _CMU_LFXOCTRL_TIMEOUT_DEFAULT
+// <cmuLfxoStartupDelay_2Cycles=> 2 cycles
+// <cmuLfxoStartupDelay_256Cycles=> 256 cycles
+// <cmuLfxoStartupDelay_1KCycles=> 1K cycles
+// <cmuLfxoStartupDelay_2KCycles=> 2K cycles
+// <cmuLfxoStartupDelay_4KCycles=> 4K cycles
+// <cmuLfxoStartupDelay_8KCycles=> 8K cycles
+// <cmuLfxoStartupDelay_16KCycles=> 16K cycles
+// <cmuLfxoStartupDelay_32KCycles=> 32K cycles
+// <i> Default: cmuLfxoStartupDelay_4KCycles
+#define SL_DEVICE_INIT_LFXO_TIMEOUT           cmuLfxoStartupDelay_4KCycles
 // <<< end of configuration section >>>
 
 #endif // SL_DEVICE_INIT_LFXO_CONFIG_H

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>rail_soc_empty</name>
+	<name>Guardener</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -28,5 +28,6 @@
 		<nature>com.silabs.ss.framework.ide.project.sls.core.SLSProjectNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
 </projectDescription>

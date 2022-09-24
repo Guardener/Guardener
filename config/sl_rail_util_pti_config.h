@@ -57,15 +57,13 @@
 // $[PTI_SL_RAIL_UTIL_PTI]
 #define SL_RAIL_UTIL_PTI_PERIPHERAL              PTI
 
-// PTI DOUT on PB12
-#define SL_RAIL_UTIL_PTI_DOUT_PORT               gpioPortB
-#define SL_RAIL_UTIL_PTI_DOUT_PIN                12
-#define SL_RAIL_UTIL_PTI_DOUT_LOC                6
+// PTI DOUT on PC04
+#define SL_RAIL_UTIL_PTI_DOUT_PORT               gpioPortC
+#define SL_RAIL_UTIL_PTI_DOUT_PIN                4
 
-// PTI DFRAME on PB13
-#define SL_RAIL_UTIL_PTI_DFRAME_PORT             gpioPortB
-#define SL_RAIL_UTIL_PTI_DFRAME_PIN              13
-#define SL_RAIL_UTIL_PTI_DFRAME_LOC              6
+// PTI DFRAME on PC05
+#define SL_RAIL_UTIL_PTI_DFRAME_PORT             gpioPortC
+#define SL_RAIL_UTIL_PTI_DFRAME_PIN              5
 
 // [PTI_SL_RAIL_UTIL_PTI]$
 
