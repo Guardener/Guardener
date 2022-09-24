@@ -1,9 +1,9 @@
 /***************************************************************************//**
  * @file
- * @brief main() function.
+ * @brief main.c
  *******************************************************************************
  * # License
- * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2018 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -27,18 +27,49 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
+
+// -----------------------------------------------------------------------------
+//                                   Includes
+// -----------------------------------------------------------------------------
 #include "sl_component_catalog.h"
 #include "sl_system_init.h"
-#include "app.h"
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-#include "sl_power_manager.h"
-#endif // SL_CATALOG_POWER_MANAGER_PRESENT
+  #include "sl_power_manager.h"
+#endif
+#include "app_init.h"
+#include "app_process.h"
 #if defined(SL_CATALOG_KERNEL_PRESENT)
-#include "sl_system_kernel.h"
+  #include "sl_system_kernel.h"
+  #include "app_task_init.h"
 #else // SL_CATALOG_KERNEL_PRESENT
-#include "sl_system_process_action.h"
+  #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
 
+// -----------------------------------------------------------------------------
+//                              Macros and Typedefs
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//                          Static Function Declarations
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//                                Global Variables
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+//                                Static Variables
+// -----------------------------------------------------------------------------
+#if !defined(SL_CATALOG_KERNEL_PRESENT)
+/// A static handle of a RAIL instance
+static RAIL_Handle_t rail_handle;
+#endif
+// -----------------------------------------------------------------------------
+//                          Public Function Definitions
+// -----------------------------------------------------------------------------
+/******************************************************************************
+ * Main function
+ *****************************************************************************/
 int main(void)
 {
   // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
@@ -48,7 +79,11 @@ int main(void)
 
   // Initialize the application. For example, create periodic timer(s) or
   // task(s) if the kernel is present.
-  app_init();
+#if defined(SL_CATALOG_KERNEL_PRESENT)
+  app_task_init();
+#else
+  rail_handle = app_init();
+#endif
 
 #if defined(SL_CATALOG_KERNEL_PRESENT)
   // Start the kernel. Task(s) created in app_init() will start running.
@@ -60,7 +95,7 @@ int main(void)
     sl_system_process_action();
 
     // Application process.
-    app_process_action();
+    app_process_action(rail_handle);
 
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
     // Let the CPU go to sleep if the system allows it.
@@ -69,3 +104,7 @@ int main(void)
   }
 #endif // SL_CATALOG_KERNEL_PRESENT
 }
+
+// -----------------------------------------------------------------------------
+//                          Static Function Definitions
+// -----------------------------------------------------------------------------
