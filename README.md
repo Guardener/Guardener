@@ -2,7 +2,7 @@
 
 > Note: this expects a specific Gecko Bootloader to be present on the device. For details see the Troubleshooting section.
 
-## TODO: Explain code template
+## TODO: Explain code template  
 
 ## Getting Started
 

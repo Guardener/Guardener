@@ -4,63 +4,63 @@
     <folder name="platform">
       <folder name="Device">
         <folder name="SiliconLabs">
-          <folder name="BGM13">
+          <folder name="EFR32BG13P">
             <folder name="Source">
-              <file name="system_bgm13.c" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Source/system_bgm13.c"/>
-              <file name="startup_bgm13.c" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Source/startup_bgm13.c"/>
+              <file name="system_efr32bg13p.c" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Source/system_efr32bg13p.c"/>
+              <file name="startup_efr32bg13p.c" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Source/startup_efr32bg13p.c"/>
             </folder>
             <folder name="Include">
-              <file name="bgm13s22f512ga.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13s22f512ga.h"/>
-              <file name="bgm13_acmp.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_acmp.h"/>
-              <file name="bgm13_adc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_adc.h"/>
-              <file name="bgm13_af_pins.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_af_pins.h"/>
-              <file name="bgm13_af_ports.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_af_ports.h"/>
-              <file name="bgm13_cmu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_cmu.h"/>
-              <file name="bgm13_cryotimer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_cryotimer.h"/>
-              <file name="bgm13_crypto.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_crypto.h"/>
-              <file name="bgm13_csen.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_csen.h"/>
-              <file name="bgm13_devinfo.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_devinfo.h"/>
-              <file name="bgm13_dma_descriptor.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_dma_descriptor.h"/>
-              <file name="bgm13_dmareq.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_dmareq.h"/>
-              <file name="bgm13_emu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_emu.h"/>
-              <file name="bgm13_etm.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_etm.h"/>
-              <file name="bgm13_fpueh.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_fpueh.h"/>
-              <file name="bgm13_gpcrc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_gpcrc.h"/>
-              <file name="bgm13_gpio.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_gpio.h"/>
-              <file name="bgm13_gpio_p.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_gpio_p.h"/>
-              <file name="bgm13_i2c.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_i2c.h"/>
-              <file name="bgm13_idac.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_idac.h"/>
-              <file name="bgm13_ldma.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_ldma.h"/>
-              <file name="bgm13_ldma_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_ldma_ch.h"/>
-              <file name="bgm13_lesense.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_lesense.h"/>
-              <file name="bgm13_lesense_buf.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_lesense_buf.h"/>
-              <file name="bgm13_lesense_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_lesense_ch.h"/>
-              <file name="bgm13_lesense_st.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_lesense_st.h"/>
-              <file name="bgm13_letimer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_letimer.h"/>
-              <file name="bgm13_leuart.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_leuart.h"/>
-              <file name="bgm13_msc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_msc.h"/>
-              <file name="bgm13_pcnt.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_pcnt.h"/>
-              <file name="bgm13_prs.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_prs.h"/>
-              <file name="bgm13_prs_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_prs_ch.h"/>
-              <file name="bgm13_prs_signals.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_prs_signals.h"/>
-              <file name="bgm13_rmu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rmu.h"/>
-              <file name="bgm13_romtable.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_romtable.h"/>
-              <file name="bgm13_rtc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rtc.h"/>
-              <file name="bgm13_rtc_comp.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rtc_comp.h"/>
-              <file name="bgm13_rtcc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rtcc.h"/>
-              <file name="bgm13_rtcc_cc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rtcc_cc.h"/>
-              <file name="bgm13_rtcc_ret.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_rtcc_ret.h"/>
-              <file name="bgm13_smu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_smu.h"/>
-              <file name="bgm13_timer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_timer.h"/>
-              <file name="bgm13_timer_cc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_timer_cc.h"/>
-              <file name="bgm13_trng.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_trng.h"/>
-              <file name="bgm13_usart.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_usart.h"/>
-              <file name="bgm13_vdac.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_vdac.h"/>
-              <file name="bgm13_vdac_opa.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_vdac_opa.h"/>
-              <file name="bgm13_wdog.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_wdog.h"/>
-              <file name="bgm13_wdog_pch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/bgm13_wdog_pch.h"/>
-              <file name="em_device.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/em_device.h"/>
-              <file name="system_bgm13.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/BGM13/Include/system_bgm13.h"/>
+              <file name="efr32bg13p632f512gm48.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p632f512gm48.h"/>
+              <file name="efr32bg13p_acmp.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_acmp.h"/>
+              <file name="efr32bg13p_adc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_adc.h"/>
+              <file name="efr32bg13p_af_pins.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_af_pins.h"/>
+              <file name="efr32bg13p_af_ports.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_af_ports.h"/>
+              <file name="efr32bg13p_cmu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_cmu.h"/>
+              <file name="efr32bg13p_cryotimer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_cryotimer.h"/>
+              <file name="efr32bg13p_crypto.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_crypto.h"/>
+              <file name="efr32bg13p_csen.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_csen.h"/>
+              <file name="efr32bg13p_devinfo.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_devinfo.h"/>
+              <file name="efr32bg13p_dma_descriptor.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_dma_descriptor.h"/>
+              <file name="efr32bg13p_dmareq.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_dmareq.h"/>
+              <file name="efr32bg13p_emu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_emu.h"/>
+              <file name="efr32bg13p_etm.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_etm.h"/>
+              <file name="efr32bg13p_fpueh.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_fpueh.h"/>
+              <file name="efr32bg13p_gpcrc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_gpcrc.h"/>
+              <file name="efr32bg13p_gpio.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_gpio.h"/>
+              <file name="efr32bg13p_gpio_p.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_gpio_p.h"/>
+              <file name="efr32bg13p_i2c.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_i2c.h"/>
+              <file name="efr32bg13p_idac.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_idac.h"/>
+              <file name="efr32bg13p_ldma.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_ldma.h"/>
+              <file name="efr32bg13p_ldma_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_ldma_ch.h"/>
+              <file name="efr32bg13p_lesense.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_lesense.h"/>
+              <file name="efr32bg13p_lesense_buf.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_lesense_buf.h"/>
+              <file name="efr32bg13p_lesense_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_lesense_ch.h"/>
+              <file name="efr32bg13p_lesense_st.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_lesense_st.h"/>
+              <file name="efr32bg13p_letimer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_letimer.h"/>
+              <file name="efr32bg13p_leuart.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_leuart.h"/>
+              <file name="efr32bg13p_msc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_msc.h"/>
+              <file name="efr32bg13p_pcnt.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_pcnt.h"/>
+              <file name="efr32bg13p_prs.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_prs.h"/>
+              <file name="efr32bg13p_prs_ch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_prs_ch.h"/>
+              <file name="efr32bg13p_prs_signals.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_prs_signals.h"/>
+              <file name="efr32bg13p_rmu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rmu.h"/>
+              <file name="efr32bg13p_romtable.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_romtable.h"/>
+              <file name="efr32bg13p_rtc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rtc.h"/>
+              <file name="efr32bg13p_rtc_comp.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rtc_comp.h"/>
+              <file name="efr32bg13p_rtcc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rtcc.h"/>
+              <file name="efr32bg13p_rtcc_cc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rtcc_cc.h"/>
+              <file name="efr32bg13p_rtcc_ret.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_rtcc_ret.h"/>
+              <file name="efr32bg13p_smu.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_smu.h"/>
+              <file name="efr32bg13p_timer.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_timer.h"/>
+              <file name="efr32bg13p_timer_cc.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_timer_cc.h"/>
+              <file name="efr32bg13p_trng.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_trng.h"/>
+              <file name="efr32bg13p_usart.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_usart.h"/>
+              <file name="efr32bg13p_vdac.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_vdac.h"/>
+              <file name="efr32bg13p_vdac_opa.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_vdac_opa.h"/>
+              <file name="efr32bg13p_wdog.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_wdog.h"/>
+              <file name="efr32bg13p_wdog_pch.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/efr32bg13p_wdog_pch.h"/>
+              <file name="em_device.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/em_device.h"/>
+              <file name="system_efr32bg13p.h" linked="false" uri="studio:/sdk/platform/Device/SiliconLabs/EFR32BG13P/Include/system_efr32bg13p.h"/>
             </folder>
           </folder>
         </folder>
@@ -261,8 +261,7 @@
           </folder>
           <folder name="autogen">
             <folder name="librail_release">
-              <file name="librail_config_bgm13s22f512ga_gcc.a" linked="false" uri="studio:/sdk/platform/radio/rail_lib/autogen/librail_release/librail_config_bgm13s22f512ga_gcc.a"/>
-              <file name="librail_module_efr32xg13_gcc_release.a" linked="false" uri="studio:/sdk/platform/radio/rail_lib/autogen/librail_release/librail_module_efr32xg13_gcc_release.a"/>
+              <file name="librail_efr32xg13_gcc_release.a" linked="false" uri="studio:/sdk/platform/radio/rail_lib/autogen/librail_release/librail_efr32xg13_gcc_release.a"/>
             </folder>
           </folder>
           <folder name="plugin">
@@ -271,6 +270,7 @@
                 <file name="sl_rail_util_pa_curves.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/efr32xg1x/sl_rail_util_pa_curves.h"/>
               </folder>
               <file name="pa_conversions_efr32.c" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_conversions_efr32.c"/>
+              <file name="pa_curves_efr32.c" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_curves_efr32.c"/>
               <file name="pa_conversions_efr32.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_conversions_efr32.h"/>
               <file name="pa_curve_types_efr32.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_curve_types_efr32.h"/>
               <file name="pa_curves_efr32.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_curves_efr32.h"/>
@@ -590,9 +590,9 @@
       </folder>
     </folder>
   </folder>
-  <file name="main.c" linked="false" uri="studio:/sdk/app/bluetooth/example/bt_soc_empty/main.c"/>
-  <file name="app.c" linked="false" uri="studio:/sdk/app/bluetooth/example/bt_soc_empty/app.c"/>
-  <file name="app.h" linked="false" uri="studio:/sdk/app/bluetooth/example/bt_soc_empty/app.h"/>
+  <file name="main.c" linked="false" uri="studio:/sdk/app/bluetooth/example/Guardener/main.c"/>
+  <file name="app.c" linked="false" uri="studio:/sdk/app/bluetooth/example/Guardener/app.c"/>
+  <file name="app.h" linked="false" uri="studio:/sdk/app/bluetooth/example/Guardener/app.h"/>
   <file name="create_bl_files.bat" linked="false" uri="studio:/sdk/app/bluetooth/script/create_bl_files.bat"/>
   <file name="create_bl_files.sh" linked="false" uri="studio:/sdk/app/bluetooth/script/create_bl_files.sh"/>
   <file name="readme_img0.png" linked="false" uri="studio:/sdk/app/bluetooth/documentation/example/soc_empty/readme_img0.png"/>
@@ -602,7 +602,7 @@
   <file name="readme_img4.png" linked="false" uri="studio:/sdk/app/bluetooth/documentation/example/soc_empty/readme_img4.png"/>
   <file name="readme.md" linked="false" uri="studio:/sdk/app/bluetooth/documentation/example/soc_empty/readme.md"/>
   <includePath uri="studio:/project/"/>
-  <includePath uri="studio:/project/gecko_sdk_4.1.1/platform/Device/SiliconLabs/BGM13/Include"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.1/platform/Device/SiliconLabs/EFR32BG13P/Include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.1/app/common/util/app_assert"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.1/protocol/bluetooth/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.1/platform/common/inc"/>
@@ -638,12 +638,12 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.1/platform/service/sleeptimer/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.1/util/third_party/crypto/sl_component/sl_protocol_crypto/src"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.1/platform/service/udelay/inc"/>
-  <macroDefinition name="BGM13S22F512GA"/>
+  <macroDefinition name="EFR32BG13P632F512GM48"/>
   <macroDefinition name="SL_APP_PROPERTIES"/>
   <macroDefinition name="SL_BOARD_NAME" value="&quot;BRD4001A&quot;"/>
   <macroDefinition name="SL_BOARD_REV" value="&quot;A03&quot;"/>
-  <macroDefinition name="SL_BOARD_NAME" value="&quot;BRD4305C&quot;"/>
-  <macroDefinition name="SL_BOARD_REV" value="&quot;A05&quot;"/>
+  <macroDefinition name="SL_BOARD_NAME" value="&quot;BRD4104A&quot;"/>
+  <macroDefinition name="SL_BOARD_REV" value="&quot;A02&quot;"/>
   <macroDefinition name="SL_COMPONENT_CATALOG_PRESENT"/>
   <macroDefinition name="MBEDTLS_CONFIG_FILE" value="&lt;mbedtls_config.h>"/>
   <macroDefinition name="MBEDTLS_PSA_CRYPTO_CLIENT"/>
@@ -653,8 +653,7 @@
   <libraryFile uri="studio:/project/gecko_sdk_4.1.1/protocol/bluetooth/lib/EFR32BG13P/GCC/binapploader.o"/>
   <libraryFile uri="studio:/project/gecko_sdk_4.1.1/protocol/bluetooth/lib/EFR32BG13P/GCC/libbluetooth.a"/>
   <libraryFile uri="studio:/project/gecko_sdk_4.1.1/protocol/bluetooth/lib/EFR32BG13P/GCC/libpsstore.a"/>
-  <libraryFile uri="studio:/project/gecko_sdk_4.1.1/platform/radio/rail_lib/autogen/librail_release/librail_config_bgm13s22f512ga_gcc.a"/>
-  <libraryFile uri="studio:/project/gecko_sdk_4.1.1/platform/radio/rail_lib/autogen/librail_release/librail_module_efr32xg13_gcc_release.a"/>
+  <libraryFile uri="studio:/project/gecko_sdk_4.1.1/platform/radio/rail_lib/autogen/librail_release/librail_efr32xg13_gcc_release.a"/>
   <libraryFile name="gcc"/>
   <libraryFile name="c"/>
   <libraryFile name="m"/>
@@ -728,7 +727,7 @@
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.clibs" value="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.nanospec"/>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.map" value="true"/>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.map" value="true"/>
-  <toolOption toolId="studio.ide.project" optionId="device_opn" value="bgm13s22f512ga"/>
+  <toolOption toolId="studio.ide.project" optionId="device_opn" value="efr32bg13p632f512gm48"/>
   <toolOption toolId="makefile.arm.gcc.linker" optionId="misc">
     <toolListOption value="-Wl,--gc-sections"/>
   </toolOption>

@@ -68,7 +68,7 @@
 // <gpio> SL_BOARD_ENABLE_SENSOR_RHT
 // $[GPIO_SL_BOARD_ENABLE_SENSOR_RHT]
 #define SL_BOARD_ENABLE_SENSOR_RHT_PORT          gpioPortD
-#define SL_BOARD_ENABLE_SENSOR_RHT_PIN           9
+#define SL_BOARD_ENABLE_SENSOR_RHT_PIN           15
 // [GPIO_SL_BOARD_ENABLE_SENSOR_RHT]$
 
 // <<< sl:end pin_tool >>>

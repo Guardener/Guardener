@@ -26,7 +26,6 @@ include:
 sdk: {id: gecko_sdk, version: 4.1.1}
 toolchain_settings: []
 component:
-- {id: BGM13S22F512GA}
 - {id: bluetooth_feature_gatt_server}
 - {id: in_place_ota_dfu}
 - {id: bluetooth_feature_sm}
@@ -37,13 +36,14 @@ component:
 - {id: rail_util_pti}
 - {id: bluetooth_feature_gatt}
 - {id: bluetooth_feature_legacy_scanner}
+- {id: EFR32BG13P632F512GM48}
 - {id: bluetooth_feature_connection}
 - {id: brd4001a}
 - {id: bluetooth_feature_system}
 - {id: component_catalog}
-- {id: brd4305c}
 - {id: bootloader_interface}
 - {id: app_assert}
+- {id: brd4104a}
 other_file:
 - {path: create_bl_files.bat}
 - {path: create_bl_files.sh}
