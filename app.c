@@ -60,29 +60,33 @@ static volatile bool app_btn0_pressed = false;
 static sl_simple_timer_t app_periodic_timer;
 
 // Periodic timer callback.
-static void app_periodic_timer_cb(sl_simple_timer_t *timer, void *data);
+static void
+app_periodic_timer_cb (sl_simple_timer_t *timer, void *data);
 ////////////////////////////////////////////////////////////////////////////////
 
 /**************************************************************************//**
  * Application Init.
  *****************************************************************************/
-SL_WEAK void app_init(void)
+SL_WEAK void
+app_init (void)
 {
   sl_status_t sc;
   app_log_info("Temp Sensor Initialization\n");
   // Init temperature sensor.
-  sc = sl_sensor_rht_init();
-  if (sc != SL_STATUS_OK) {
-    app_log_warning("Failed to init Si7021 RH/Temp sensor");
-    app_log_nl();
-  }
+  sc = sl_sensor_rht_init ();
+  if (sc != SL_STATUS_OK)
+    {
+      app_log_warning("Failed to init Si7021 RH/Temp sensor");
+      app_log_nl();
+    }
 }
 
 #ifndef SL_CATALOG_KERNEL_PRESENT
 /**************************************************************************//**
  * Application Process Action.
  *****************************************************************************/
-SL_WEAK void app_process_action(void)
+SL_WEAK void
+app_process_action (void)
 {
   /////////////////////////////////////////////////////////////////////////////
   // Put your additional application code here!                              //
@@ -98,14 +102,16 @@ SL_WEAK void app_process_action(void)
  *
  * @param[in] evt Event coming from the Bluetooth stack.
  *****************************************************************************/
-void sl_bt_on_event(sl_bt_msg_t *evt)
+void
+sl_bt_on_event (sl_bt_msg_t *evt)
 {
   sl_status_t sc;
   bd_addr address;
   uint8_t address_type;
   uint8_t system_id[8];
 
-  switch (SL_BT_MSG_ID(evt->header)) {
+  switch (SL_BT_MSG_ID(evt->header))
+    {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
     // Do not call any stack command before receiving this boot event!
@@ -118,7 +124,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                    evt->data.evt_system_boot.build);
 
       // Extract unique ID from BT Address.
-      sc = sl_bt_system_get_identity_address(&address, &address_type);
+      sc = sl_bt_system_get_identity_address (&address, &address_type);
       app_assert_status(sc);
 
       // Pad and reverse unique ID to get System ID.
@@ -131,86 +137,79 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       system_id[6] = address.addr[1];
       system_id[7] = address.addr[0];
 
-      sc = sl_bt_gatt_server_write_attribute_value(gattdb_system_id,
-                                                   0,
-                                                   sizeof(system_id),
-                                                   system_id);
+      sc = sl_bt_gatt_server_write_attribute_value (gattdb_system_id, 0,
+                                                    sizeof(system_id),
+                                                    system_id);
       app_assert_status(sc);
 
       app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
                    address_type ? "static random" : "public device",
-                   address.addr[5],
-                   address.addr[4],
-                   address.addr[3],
-                   address.addr[2],
-                   address.addr[1],
-                   address.addr[0]);
+                   address.addr[5], address.addr[4], address.addr[3],
+                   address.addr[2], address.addr[1], address.addr[0]);
 
       // Create an advertising set.
-      sc = sl_bt_advertiser_create_set(&advertising_set_handle);
+      sc = sl_bt_advertiser_create_set (&advertising_set_handle);
       app_assert_status(sc);
 
       // Generate data for advertising
-      sc = sl_bt_legacy_advertiser_generate_data(advertising_set_handle,
-                                                 sl_bt_advertiser_general_discoverable);
+      sc = sl_bt_legacy_advertiser_generate_data (
+          advertising_set_handle, sl_bt_advertiser_general_discoverable);
       app_assert_status(sc);
 
       // Set advertising interval to 100ms.
-      sc = sl_bt_advertiser_set_timing(
-                                advertising_set_handle,
-                                160, // min. adv. interval (milliseconds * 1.6)
-                                160, // max. adv. interval (milliseconds * 1.6)
-                                0,   // adv. duration
-                                0);  // max. num. adv. events
+      sc = sl_bt_advertiser_set_timing (advertising_set_handle, 160, // min. adv. interval (milliseconds * 1.6)
+                                        160, // max. adv. interval (milliseconds * 1.6)
+                                        0,   // adv. duration
+                                        0);  // max. num. adv. events
       app_assert_status(sc);
 
       // Start advertising and enable connections.
-      sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
-                                         sl_bt_advertiser_connectable_scannable);
+      sc = sl_bt_legacy_advertiser_start (
+          advertising_set_handle, sl_bt_advertiser_connectable_scannable);
       app_assert_status(sc);
       break;
 
-    // -------------------------------
-    // This event indicates that a new connection was opened.
+      // -------------------------------
+      // This event indicates that a new connection was opened.
     case sl_bt_evt_connection_opened_id:
       app_log_info("Connection opened\n");
 
 #ifdef SL_CATALOG_BLUETOOTH_FEATURE_POWER_CONTROL_PRESENT
       // Set remote connection power reporting - needed for Power Control
-      sc = sl_bt_connection_set_remote_power_reporting(
-        evt->data.evt_connection_opened.connection,
-        sl_bt_connection_power_reporting_enable);
+      sc = sl_bt_connection_set_remote_power_reporting (
+          evt->data.evt_connection_opened.connection,
+          sl_bt_connection_power_reporting_enable);
       app_assert_status(sc);
 #endif // SL_CATALOG_BLUETOOTH_FEATURE_POWER_CONTROL_PRESENT
 
       break;
 
-    // -------------------------------
-    // This event indicates that a connection was closed.
+      // -------------------------------
+      // This event indicates that a connection was closed.
     case sl_bt_evt_connection_closed_id:
       app_log_info("Connection closed\n");
 
       // Generate data for advertising
-      sc = sl_bt_legacy_advertiser_generate_data(advertising_set_handle,
-                                                 sl_bt_advertiser_general_discoverable);
+      sc = sl_bt_legacy_advertiser_generate_data (
+          advertising_set_handle, sl_bt_advertiser_general_discoverable);
       app_assert_status(sc);
 
       // Restart advertising after client has disconnected.
-      sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
-                                         sl_bt_advertiser_connectable_scannable);
+      sc = sl_bt_legacy_advertiser_start (
+          advertising_set_handle, sl_bt_advertiser_connectable_scannable);
       app_assert_status(sc);
       app_log_info("Started advertising\n");
       break;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Add additional event handlers here as your application requires!      //
-    ///////////////////////////////////////////////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////
+      // Add additional event handlers here as your application requires!      //
+      ///////////////////////////////////////////////////////////////////////////
 
-    // -------------------------------
-    // Default event handler.
+      // -------------------------------
+      // Default event handler.
     default:
       break;
-  }
+    }
 }
 
 /**************************************************************************//**
@@ -219,14 +218,15 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
  * @param[in] reason Unused parameter required by the health_thermometer component
  * @param[in] connection Unused parameter required by the health_thermometer component
  *****************************************************************************/
-void sl_bt_connection_closed_cb(uint16_t reason, uint8_t connection)
+void
+sl_bt_connection_closed_cb (uint16_t reason, uint8_t connection)
 {
-  (void)reason;
-  (void)connection;
+  (void) reason;
+  (void) connection;
   sl_status_t sc;
 
   // Stop timer.
-  sc = sl_simple_timer_stop(&app_periodic_timer);
+  sc = sl_simple_timer_stop (&app_periodic_timer);
   app_assert_status(sc);
 }
 
@@ -237,28 +237,31 @@ void sl_bt_connection_closed_cb(uint16_t reason, uint8_t connection)
  * Called when indication of temperature measurement is enabled/disabled by
  * the client.
  *****************************************************************************/
-void sl_bt_ht_temperature_measurement_indication_changed_cb(uint8_t connection,
-                                                            sl_bt_gatt_client_config_flag_t client_config)
+void
+sl_bt_ht_temperature_measurement_indication_changed_cb (
+    uint8_t connection, sl_bt_gatt_client_config_flag_t client_config)
 {
   sl_status_t sc;
   app_connection = connection;
   // Indication or notification enabled.
-  if (sl_bt_gatt_disable != client_config) {
-    // Start timer used for periodic indications.
-    sc = sl_simple_timer_start(&app_periodic_timer,
-                               SL_BT_HT_MEASUREMENT_INTERVAL_SEC * 1000,
-                               app_periodic_timer_cb,
-                               NULL,
-                               true);
-    app_assert_status(sc);
-    // Send first indication.
-    app_periodic_timer_cb(&app_periodic_timer, NULL);
-  }
+  if (sl_bt_gatt_disable != client_config)
+    {
+      // Start timer used for periodic indications.
+      sc = sl_simple_timer_start (&app_periodic_timer,
+      SL_BT_HT_MEASUREMENT_INTERVAL_SEC * 1000,
+                                  app_periodic_timer_cb,
+                                  NULL,
+                                  true);
+      app_assert_status(sc);
+      // Send first indication.
+      app_periodic_timer_cb (&app_periodic_timer, NULL);
+    }
   // Indications disabled.
-  else {
-    // Stop timer used for periodic indications.
-    (void)sl_simple_timer_stop(&app_periodic_timer);
-  }
+  else
+    {
+      // Stop timer used for periodic indications.
+      (void) sl_simple_timer_stop (&app_periodic_timer);
+    }
 }
 
 /**************************************************************************//**
@@ -266,30 +269,36 @@ void sl_bt_ht_temperature_measurement_indication_changed_cb(uint8_t connection,
  * Button state changed callback
  * @param[in] handle Button event handle
  *****************************************************************************/
-void sl_button_on_change(const sl_button_t *handle)
+void
+sl_button_on_change (const sl_button_t *handle)
 {
   // Button pressed.
-  if (sl_button_get_state(handle) == SL_SIMPLE_BUTTON_PRESSED) {
-    if (&sl_button_btn0 == handle) {
-      app_btn0_pressed = true;
+  if (sl_button_get_state (handle) == SL_SIMPLE_BUTTON_PRESSED)
+    {
+      if (&sl_button_btn0 == handle)
+        {
+          app_btn0_pressed = true;
+        }
     }
-  }
   // Button released.
-  else if (sl_button_get_state(handle) == SL_SIMPLE_BUTTON_RELEASED) {
-    if (&sl_button_btn0 == handle) {
-      app_btn0_pressed = false;
+  else if (sl_button_get_state (handle) == SL_SIMPLE_BUTTON_RELEASED)
+    {
+      if (&sl_button_btn0 == handle)
+        {
+          app_btn0_pressed = false;
+        }
     }
-  }
 }
 
 /**************************************************************************//**
  * Timer callback
  * Called periodically to time periodic temperature measurements and indications.
  *****************************************************************************/
-static void app_periodic_timer_cb(sl_simple_timer_t *timer, void *data)
+static void
+app_periodic_timer_cb (sl_simple_timer_t *timer, void *data)
 {
-  (void)data;
-  (void)timer;
+  (void) data;
+  (void) timer;
   sl_status_t sc;
   int32_t temperature = 0;
   uint32_t humidity = 0;
@@ -297,25 +306,29 @@ static void app_periodic_timer_cb(sl_simple_timer_t *timer, void *data)
   // float tmp_f = 0.0;
 
   // Measure temperature; units are % and milli-Celsius.
-  sc = sl_sensor_rht_get(&humidity, &temperature);
-  if (SL_STATUS_NOT_INITIALIZED == sc) {
-    app_log_info("Relative Humidity and Temperature sensor is not initialized.");
-    app_log_nl();
-  } else if (sc != SL_STATUS_OK) {
-    app_log_warning("Invalid RHT reading: %lu %ld\n", humidity, temperature);
-  }
+  sc = sl_sensor_rht_get (&humidity, &temperature);
+  if (SL_STATUS_NOT_INITIALIZED == sc)
+    {
+      app_log_info(
+          "Relative Humidity and Temperature sensor is not initialized.");
+      app_log_nl();
+    }
+  else if (sc != SL_STATUS_OK)
+    {
+      app_log_warning("Invalid RHT reading: %lu %ld\n", humidity, temperature);
+    }
 
   // button 0 pressed: overwrite temperature with -20C.
-  if (app_btn0_pressed) {
-    temperature = -20 * 1000;
-  }
+  if (app_btn0_pressed)
+    {
+      temperature = -20 * 1000;
+    }
 
-  tmp_c = (float)temperature / 1000;
+  tmp_c = (float) temperature / 1000;
   app_log_info("Temperature: %5.2f C\n", tmp_c);
   // Send temperature measurement indication to connected client.
-  sc = sl_bt_ht_temperature_measurement_indicate(app_connection,
-                                                 temperature,
-                                                 false);
+  sc = sl_bt_ht_temperature_measurement_indicate (app_connection, temperature,
+  false);
   // Conversion to Fahrenheit: F = C * 1.8 + 32
   // tmp_f = (float)(temperature*18+320000)/10000;
   // app_log_info("Temperature: %5.2f F\n", tmp_f);
@@ -323,26 +336,24 @@ static void app_periodic_timer_cb(sl_simple_timer_t *timer, void *data)
   // sc = sl_bt_ht_temperature_measurement_indicate(app_connection,
   //                                                (temperature*18+320000)/10,
   //                                                true);
-  if (sc) {
-    app_log_warning("Failed to send temperature measurement indication\n");
-  }
+  if (sc)
+    {
+      app_log_warning("Failed to send temperature measurement indication\n");
+    }
 }
 
 #ifdef SL_CATALOG_CLI_PRESENT
-void hello(sl_cli_command_arg_t *arguments)
+void
+hello (sl_cli_command_arg_t *arguments)
 {
   (void) arguments;
   bd_addr address;
   uint8_t address_type;
-  sl_status_t sc = sl_bt_system_get_identity_address(&address, &address_type);
+  sl_status_t sc = sl_bt_system_get_identity_address (&address, &address_type);
   app_assert_status(sc);
   app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
                address_type ? "static random" : "public device",
-               address.addr[5],
-               address.addr[4],
-               address.addr[3],
-               address.addr[2],
-               address.addr[1],
-               address.addr[0]);
+               address.addr[5], address.addr[4], address.addr[3],
+               address.addr[2], address.addr[1], address.addr[0]);
 }
 #endif // SL_CATALOG_CLI_PRESENT
