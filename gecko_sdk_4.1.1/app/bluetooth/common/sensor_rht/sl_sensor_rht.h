@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include "sl_status.h"
+#include "sl_i2cspm.h"
 
 /**************************************************************************//**
  * Initialize Relative Humidity and Temperature sensor.
@@ -60,5 +61,7 @@ void sl_sensor_rht_deinit(void);
  * @return Status of the operation.
  *****************************************************************************/
 sl_status_t sl_sensor_rht_get(uint32_t *rh, int32_t *t);
+
+sl_i2cspm_t * get_i2cspm_handle();
 
 #endif // SL_SENSOR_RHT_H

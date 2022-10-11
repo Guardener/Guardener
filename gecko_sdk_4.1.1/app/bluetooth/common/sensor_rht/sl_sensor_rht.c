@@ -44,6 +44,7 @@
 // Private variables
 
 static bool initialized = false;
+static sl_i2cspm_t *i2cspm_s;
 
 // -----------------------------------------------------------------------------
 // Public function definitions
@@ -57,11 +58,18 @@ sl_status_t sl_sensor_rht_init(void)
              "Si70xx sensor not available\n");
   sc = sl_si70xx_init(rht_sensor, RHT_ADDRESS);
   if (SL_STATUS_OK == sc) {
+	i2cspm_s = rht_sensor;
     initialized = true;
   } else {
+	i2cspm_s = NULL;
     initialized = false;
   }
   return sc;
+}
+
+sl_i2cspm_t * get_i2cspm_handle()
+{
+	return i2cspm_s;
 }
 
 void sl_sensor_rht_deinit(void)
