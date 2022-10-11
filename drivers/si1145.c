@@ -44,8 +44,15 @@ sl_status_t si1145_init(sl_i2cspm_t *i2cspm) {
 		return SL_STATUS_NULL_POINTER;
 	}
 
+	/* Check that Si1145 is on the bus */
+	uint8_t data = 0x00;
+	ret += si1145_read_register(i2cspm, SI1145_REG_PART_ID, &data);
+	if (data != SI1145_PART_ID_VAL) {
+		return SL_STATUS_NOT_FOUND;
+	}
+
 	/* Reset the sensor. The reset function implements the necessary delays after reset. */
-	ret = si1145_reset(i2cspm);
+	ret += si1145_reset(i2cspm);
 	DLOGRET("si1145_reset(i2cspm)");
 
 	/* Enable UV Coefficients */
