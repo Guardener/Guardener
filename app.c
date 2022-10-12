@@ -79,23 +79,10 @@ SL_WEAK void app_init(void) {
 		app_log_nl();
 	}
 
-	float lux = 0.0, uvi = 0.0;
-	sl_i2cspm_t* i2c_h = get_i2cspm_handle();
-	sc = si1145_init(i2c_h);
-	if (sc == SL_STATUS_OK) {
-		sc = si1145_measure_lux_uvi(i2c_h, &lux, &uvi);
-	}
-	else {
+	sc = si1145_init(I2C0);
+	if (sc != SL_STATUS_OK) {
 		app_log_error("Failed to initialize the Si1145 sensor\n");
-		while(true); // crash here
-	}
-
-	if (sc == SL_STATUS_OK) {
-		app_log_info("Acquired Lux and UVI: %f & %f", lux, uvi);
-	}
-	else {
-		app_log_error("Failed to acquire lux and uvi readings\n");
-		while(true); // crash here
+		while (true) ; // crash here
 	}
 }
 
@@ -104,11 +91,13 @@ SL_WEAK void app_init(void) {
  * Application Process Action.
  *****************************************************************************/
 SL_WEAK void app_process_action(void) {
-	/////////////////////////////////////////////////////////////////////////////
-	// Put your additional application code here!                              //
-	// This is called infinitely.                                              //
-	// Do not call blocking functions from here!                               //
-	/////////////////////////////////////////////////////////////////////////////
+	float lux = 0.0, uvi = 0.0;
+	if (si1145_measure_lux_uvi(I2C0, &lux, &uvi) == SL_STATUS_OK) {
+		app_log_info("Acquired Lux and UVI: %f & %f", lux, uvi);
+	} else {
+		app_log_error("Failed to acquire lux and uvi readings\n");
+		while (true) ; // crash here
+	}
 }
 #endif // SL_CATALOG_KERNEL_PRESENT
 
