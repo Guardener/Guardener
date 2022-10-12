@@ -62,6 +62,9 @@ static volatile bool app_btn0_pressed = false;
 // Periodic timer handle.
 static sl_simple_timer_t app_periodic_timer;
 
+// PWM handle.
+static sl_pwm_instance_t pwm_500k = {0};
+
 // Periodic timer callback.
 static void
 app_periodic_timer_cb(sl_simple_timer_t* timer, void* data);
@@ -91,13 +94,25 @@ SL_WEAK void app_init(void)
         while(true); // crash here
     }
 
-    sl_pwm_instance_t pwm_500k = { // Initialize 500kHz PWM signal out of GPIO D10
-            .timer = TIMER0, /**< TIMER instance */
-            .channel = 0, /**< TIMER channel */
-            .port = gpioPortD, /**< GPIO port */
-            .pin = 10, /**< GPIO pin */
-            .location = TIMER_ROUTELOC0_CC0LOC_LOC15, /**< GPIO location */
-            };
+    // Initialize 500kHz PWM signal out of GPIO D10
+    pwm_500k.timer = TIMER0; /**< TIMER instance */
+    pwm_500k.channel = 0; /**< TIMER channel */
+    pwm_500k.port = gpioPortD; /**< GPIO port */
+    pwm_500k.pin = 10; /**< GPIO pin */
+    pwm_500k.location = TIMER_ROUTELOC0_CC0LOC_LOC15; /**< GPIO location */
+    sl_pwm_config_t pwm_cfg = {.frequency = 500000, .polarity = PWM_ACTIVE_HIGH};
+
+    sc = sl_pwm_init(&pwm_500k, &pwm_cfg);
+    if(sc != SL_STATUS_OK)
+    {
+        app_log_error("Failed to initialize the Si1145 sensor\n");
+        while(true); // crash here
+    }
+    else
+    {
+        sl_pwm_set_duty_cycle(&pwm_500k, 50);
+        sl_pwm_start(&pwm_500k);
+    }
 }
 
 #ifndef SL_CATALOG_KERNEL_PRESENT
