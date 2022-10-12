@@ -13,7 +13,6 @@
 #ifndef DRIVERS_SI1145_H_
 #define DRIVERS_SI1145_H_
 
-//#include <stdint.h>
 #include "sl_i2cspm.h"
 #include "sl_status.h"
 
@@ -266,8 +265,7 @@ extern "C" {
  *
  * @return SL_STATUS_OK on Success; SL_STATUS_INITIALIZATION on Failure
  */
-sl_status_t
-si1145_init(sl_i2cspm_t *i2cspm);
+sl_status_t si1145_init(sl_i2cspm_t* i2cspm);
 
 /***************************************************************************//**
  * @brief
@@ -280,8 +278,7 @@ si1145_init(sl_i2cspm_t *i2cspm);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_deinit(sl_i2cspm_t *i2cspm);
+sl_status_t si1145_deinit(sl_i2cspm_t* i2cspm);
 
 /***************************************************************************//**
  * @brief
@@ -299,8 +296,7 @@ si1145_deinit(sl_i2cspm_t *i2cspm);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_measure_lux_uvi(sl_i2cspm_t *i2cspm, float *lux, float *uvi);
+sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi);
 
 /***************************************************************************//**
  * @brief
@@ -318,8 +314,7 @@ si1145_measure_lux_uvi(sl_i2cspm_t *i2cspm, float *lux, float *uvi);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_read_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t *data);
+sl_status_t si1145_read_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t* data);
 
 /***************************************************************************//**
  * @brief
@@ -337,8 +332,7 @@ si1145_read_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t *data);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_write_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t data);
+sl_status_t si1145_write_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t data);
 
 /***************************************************************************//**
  * @brief
@@ -359,9 +353,7 @@ si1145_write_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t data);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_write_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length,
-		const uint8_t *data);
+sl_status_t si1145_write_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t length, const uint8_t* data);
 
 /***************************************************************************//**
  * @brief
@@ -382,9 +374,7 @@ si1145_write_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length,
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_read_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length,
-		uint8_t *data);
+sl_status_t si1145_read_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t length, uint8_t* data);
 
 /***************************************************************************//**
  * @brief
@@ -396,8 +386,7 @@ si1145_read_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length,
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_reset(sl_i2cspm_t *i2cspm);
+sl_status_t si1145_reset(sl_i2cspm_t* i2cspm);
 
 /***************************************************************************//**
  * @brief
@@ -409,8 +398,7 @@ si1145_reset(sl_i2cspm_t *i2cspm);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t
-si1145_pause_measurement(sl_i2cspm_t *i2cspm);
+sl_status_t si1145_pause_measurement(sl_i2cspm_t* i2cspm);
 
 /***************************************************************************//**
  * @brief
@@ -436,8 +424,7 @@ si1145_pause_measurement(sl_i2cspm_t *i2cspm);
  *    error. It is highly recommended that host code make use of this
  *    function.
  ******************************************************************************/
-sl_status_t
-si1145_set_parameter(sl_i2cspm_t *i2cspm, uint8_t address, uint8_t value);
+sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t value);
 
 #ifdef __cplusplus
 }
