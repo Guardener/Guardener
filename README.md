@@ -2,7 +2,33 @@
 
 > Note: this expects a specific Gecko Bootloader to be present on the device. For details see the Troubleshooting section.
 
-## TODO: Explain code template  
+## Explaination of code
+
+### Si1145  
+I2C0 is used to communicate with the Si1145 light sensor.  
+This is EXT_HEADER pins 15 & 16 for I2C_SCL & I2C_SDA respectively.
+The Si1145 has a startup sequence necessary to use it. Drivers have been created for it which reside in the `drivers` directory.
+
+### Moisture Sensor  
+The moisture sensor uses TIMER, ADC, PRS, and LDMA peripherals in EM1/EM2 to take a single-ended measurement.  
+A 500kHz signal is generated through an RC circuit which is conditioned down to a steady state analog DC voltage which can be correlated to an equivalent percent of moisture detected.  
+The 16-bit TIMER peripheral is used to generate the 500kHz signal while staying in the lowest energy mode possible. Our target is EM3, although it's likely we'll have to use EM2.  
+Measurements are requested through the use of the TIMER via the PRS in order to stay in the loweset energy state as possible.  
+ADC captures are handled by the LDMA and provided to the rest of the code for use.  
+Initial configuration used (will be adjusted later):  
+ * CLK 		- 19 MHz HFPER 
+ * ADC      - 16 MHz, 12-bit res, 2.5V internal ref
+ * TIMER  	- 500 kHz
+ * LDMA     - LDMA0 performs ADC0->SINGLEDATA to adcBuffer
+ * PRS      - PRS0 triggers ADC to acquire a single sample  
+
+TIMER0 is configured to toggle the GPIO PD10 which is connected to EXT_HEADER pin 7.  
+ADC0 is configured to sample PC9 which is connected to EXT_HEADER pin 10.  
+
+
+Below is the old getting started information which came with the initial code base.  
+
+---
 
 ## Getting Started
 
