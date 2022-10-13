@@ -3,36 +3,39 @@
  *
  *  Created on: Oct 10, 2022
  *      Author: Caleb Provost
- * 
+ *
  * @note Modeled off of SiLab's driver/si1133/src/sl_si1133.c
  */
 
-#include <stdint.h>
-#include <math.h>
-#include "sl_i2cspm.h"
-#include "sl_sleeptimer.h"
 #include "si1145.h"
 #include "app_log.h"
+#include "sl_i2cspm.h"
+#include "sl_sleeptimer.h"
+#include <math.h>
+#include <stdint.h>
 
-#define DLOGRET(...) do { app_log_debug("%s: ", __VA_ARGS__); sl_status_print(ret); } while(0)
+#define DLOGRET(...)                                                                                                   \
+  do {                                                                                                                 \
+    app_log_debug("%s: ", __VA_ARGS__);                                                                                \
+    sl_status_print(ret);                                                                                              \
+  } while (0)
 
-#define SI1145_I2C_DEVICE_BUS_ADDRESS   (0x60)
-#define SI1145_UV_COEFF0_VAL            (0x29)
-#define SI1145_UV_COEFF1_VAL            (0x89)
-#define SI1145_UV_COEFF2_VAL            (0x02)
-#define SI1145_UV_COEFF3_VAL            (0x00)
+#define SI1145_I2C_DEVICE_BUS_ADDRESS (0x60)
+#define SI1145_UV_COEFF0_VAL (0x29)
+#define SI1145_UV_COEFF1_VAL (0x89)
+#define SI1145_UV_COEFF2_VAL (0x02)
+#define SI1145_UV_COEFF3_VAL (0x00)
 
 // Needs to correspond with initialization of registers
 #define SI1145_SELECTED_LUX_RANGE (1.0) // 1.0; 14.5
-#define SI1145_SELECTED_LUX_GAIN  (0.3) // 0.3; 0.11; 0.06; 0.01; 0.008; 0.008
-#define SI1145_SELECTED_UV_RANGE  (1.0) // 1.0; 14.5
-#define SI1145_SELECTED_UV_GAIN   (0.3) // 0.3; 0.06; 0.03; 0.01
-#define SI1145_REF_UV_OFFSET      (25.0)
+#define SI1145_SELECTED_LUX_GAIN (0.3)  // 0.3; 0.11; 0.06; 0.01; 0.008; 0.008
+#define SI1145_SELECTED_UV_RANGE (1.0)  // 1.0; 14.5
+#define SI1145_SELECTED_UV_GAIN (0.3)   // 0.3; 0.06; 0.03; 0.01
+#define SI1145_REF_UV_OFFSET (25.0)
 
 static bool uv_high_range_s = false, lux_high_range_s = false;
 
-sl_status_t
-si1145_wait_until_sleep(sl_i2cspm_t* i2cspm);
+sl_status_t si1145_wait_until_sleep(sl_i2cspm_t* i2cspm);
 
 /**************************************************************************//**
  *    Initializes the Si1145 chip
@@ -59,14 +62,10 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
     DLOGRET("si1145_reset(i2cspm)");
 
     /* Enable UV Coefficients */
-    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF0,
-    SI1145_UV_COEFF0_VAL);
-    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF1,
-    SI1145_UV_COEFF1_VAL);
-    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF2,
-    SI1145_UV_COEFF2_VAL);
-    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF3,
-    SI1145_UV_COEFF3_VAL);
+    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF0, SI1145_UV_COEFF0_VAL);
+    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF1, SI1145_UV_COEFF1_VAL);
+    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF2, SI1145_UV_COEFF2_VAL);
+    ret += si1145_write_register(i2cspm, SI1145_REG_UCOEF3, SI1145_UV_COEFF3_VAL);
     DLOGRET("Enable UV Coefficients");
 
     /* Enable Sensor's Features */
@@ -80,59 +79,47 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
     ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND, SI1145_CMD_NOP);
 
     // Put the module in ALS force mode
-    ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND,
-    SI1145_CMD_ALS_FORCE);
+    ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND, SI1145_CMD_ALS_FORCE);
 
     /* Monitor the temperature in the AUX ADC */
-    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS1_ADCMUX,
-    SI1145_PARAM_PS1_ADCMUX_TEMP);
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS1_ADCMUX, SI1145_PARAM_PS1_ADCMUX_TEMP);
     DLOGRET("Enable Sensor's Features");
 
     /* Initialize the ADCs */
     ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS_ADC_GAIN, 0 /* ADC Clock is divided by 1 */);
-    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS_ADC_COUNTER,
-    SI1145_PARAM_PS_ADC_COUNTER_511_CLK);
-    ret += si1145_set_parameter(i2cspm,
-    SI1145_PARAM_PS_ADC_MISC,
-                                0x20 /* High Signal Range (Gain divided by 14.5)*/
-                                | 0x04 /*ADC Clock is divided by 16*/);
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS_ADC_COUNTER, SI1145_PARAM_PS_ADC_COUNTER_511_CLK);
+    /* High Signal Range (Gain divided by 14.5) | ADC Clock is divided by 16 */
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS_ADC_MISC, 0x20 | 0x04);
     ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_MISC, 0x00 /*Normal Signal Range*/);
     ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_GAIN, 0 /*ADC Clock is divided by 1*/);
-    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_COUNTER,
-    SI1145_PARAM_ALS_IR_ADC_COUNTER_511_CLK);
-    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_COUNTER,
-                                0x20 /* High Signal Range (Gain divided by 14.5)*/);
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_COUNTER, SI1145_PARAM_ALS_IR_ADC_COUNTER_511_CLK);
+    /* High Signal Range (Gain divided by 14.5)*/
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_IR_ADC_COUNTER, 0x20);
     lux_high_range_s = true;
     ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_VIS_ADC_GAIN, 0 /*ADC Clock is divided by 1*/);
-    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_VIS_ADC_COUNTER,
-    SI1145_PARAM_PS_ADC_COUNTER_511_CLK);
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_VIS_ADC_COUNTER, SI1145_PARAM_PS_ADC_COUNTER_511_CLK);
     ret += si1145_set_parameter(i2cspm, SI1145_PARAM_ALS_VIS_ADC_MISC, 0x00 /*Normal Signal Range*/);
     DLOGRET("Initialized the ADCs");
 
     /* Enable Interrupts */
     ret += si1145_write_register(i2cspm, SI1145_REG_INT_CFG, 0x00 /*INT pin is never driven*/);
-    ret += si1145_write_register(i2cspm, SI1145_REG_INT_CFG,
-    SI1145_REG_INT_CFG_PARAM_INT_OE);
-    ret += si1145_write_register(i2cspm, SI1145_REG_IRQ_ENABLE,
-    SI1145_REG_IRQ_ENABLE_PARAM_IRQ_ALS_IE);
+    ret += si1145_write_register(i2cspm, SI1145_REG_INT_CFG, SI1145_REG_INT_CFG_PARAM_INT_OE);
+    ret += si1145_write_register(i2cspm, SI1145_REG_IRQ_ENABLE, SI1145_REG_IRQ_ENABLE_PARAM_IRQ_ALS_IE);
     DLOGRET("Enable Interrupts");
 
 #if INIT_PROX
-  /* Initialize Proximity */
-  ret += si1145_write_register(i2cspm, SI1145_REG_PS_LED21, 0x03); // 20mA for LED 1 only
-  ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS1_ADCMUX,
-                               SI1145_PARAM_PS1_ADCMUX_LARGE_IR);
-  ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PSLED12_SELECT,
-                               SI1145_PARAM_PSLED12_SELECT_PS1_LED1);
-  DLOGRET("Initialize Proximity");
+    /* Initialize Proximity */
+    ret += si1145_write_register(i2cspm, SI1145_REG_PS_LED21, 0x03); // 20mA for LED 1 only
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PS1_ADCMUX, SI1145_PARAM_PS1_ADCMUX_LARGE_IR);
+    ret += si1145_set_parameter(i2cspm, SI1145_PARAM_PSLED12_SELECT, SI1145_PARAM_PSLED12_SELECT_PS1_LED1);
+    DLOGRET("Initialize Proximity");
 #endif // INIT_PROX
 
     /* Set rate and run auto mode */
     // ret += si1145_write_register(i2cspm, SI1145_REG_MEAS_RATE0, 0xFF); // 255 * 31.25uS = 8ms
     ret += si1145_write_register(i2cspm, SI1145_REG_MEAS_RATE0, 0x00);
     ret += si1145_write_register(i2cspm, SI1145_REG_MEAS_RATE1, 0x00);
-    ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND,
-    SI1145_CMD_PSALS_AUTO);
+    ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND, SI1145_CMD_PSALS_AUTO);
     DLOGRET("Set rate and run auto mode");
 
     if(ret != SL_STATUS_OK)
@@ -143,10 +130,9 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
     return ret;
 }
 
-/***************************************************************************//**
- *    Stops the measurements on all channel and waits until the chip
- *    goes to sleep state.
- ******************************************************************************/
+/*********************************************************************************//**
+ * Stops the measurements on all channel and waits until the chip goes to sleep state.
+ *************************************************************************************/
 sl_status_t si1145_deinit(sl_i2cspm_t* i2cspm)
 {
     sl_status_t ret = SL_STATUS_OK;
@@ -301,7 +287,7 @@ sl_status_t si1145_read_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t* data
     I2C_TransferSeq_TypeDef seq;
     I2C_TransferReturn_TypeDef retval;
     uint8_t i2c_write_data[1];
-    sl_status_t ret = ((sl_status_t)0x0000);  ///< No error.
+    sl_status_t ret = ((sl_status_t)0x0000); ///< No error.
 
     seq.addr = SI1145_I2C_DEVICE_BUS_ADDRESS << 1;
     seq.flags = I2C_FLAG_WRITE_READ;

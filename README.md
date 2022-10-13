@@ -19,8 +19,9 @@ Initial configuration used (will be adjusted later):
  * CLK 		- 19 MHz HFPER 
  * ADC      - 16 MHz, 12-bit res, 2.5V internal ref
  * TIMER  	- 500 kHz
- * LDMA     - LDMA0 performs ADC0->SINGLEDATA to adcBuffer
+ * LETIMER	- 100ms delay to trigger PRS
  * PRS      - PRS0 triggers ADC to acquire a single sample  
+ * LDMA     - LDMA0 performs ADC0->SINGLEDATA to adcBuffer
 
 TIMER0 is configured to toggle the GPIO PD10 which is connected to EXT_HEADER pin 7.  
 ADC0 is configured to sample PC9 which is connected to EXT_HEADER pin 10.  
