@@ -47,9 +47,10 @@
 #include "sl_health_thermometer.h"
 #include <stdbool.h>
 
-#include "drivers/si1145.h"
+#include "si1145.h"
 #include "sl_pwm.h"
 #include "moisture_sensor.h"
+#include "bme280.h"
 
 // Connection handle.
 static uint8_t app_connection = 0;
@@ -68,7 +69,7 @@ static sl_pwm_instance_t pwm_500k = {0};
 
 // Moisture sensor handle.
 static moisture_sensor_cfg_t ms_cfg = {0};
-uint8_t adcBuffer[8];
+volatile uint8_t adcBuffer[8];
 
 // Periodic timer callback.
 static void app_periodic_timer_cb(sl_simple_timer_t* timer, void* data);
@@ -81,8 +82,8 @@ SL_WEAK void app_init(void)
 {
     sl_status_t sc;
     app_log_init();
+    app_log_info("App Initialization\r\n");
 
-//    app_log_info("Temp Sensor Initialization\n");
 //    // Init temperature sensor.
 //    sc = sl_sensor_rht_init();
 //    if(sc != SL_STATUS_OK)
@@ -94,70 +95,81 @@ SL_WEAK void app_init(void)
 //    sc = si1145_init(I2C0);
 //    if(sc != SL_STATUS_OK)
 //    {
+//        app_log_error("Failed to initialize the Si1145 sensor\r\n");
+//        while(true); // crash here
+//    }
+//    fflush(stdout);
+
+    // TODO: Resolve port issues; When PWM enabled, Si1145 fails.
+
+//    // Initialize 500kHz PWM signal out of GPIO D10
+//    // @formatter:off
+//    sl_pwm_instance_t fivek_cfg = {
+//            .timer = TIMER0,
+//            .channel = 0,       /**< TIMER channel */
+//            .port = gpioPortD,  /**< GPIO port */
+//            .pin = 10,          /**< GPIO pin */
+//            .location = TIMER_ROUTELOC0_CC0LOC_LOC15 /**< GPIO location */
+//        };
+//        // @formatter:on
+//    pwm_500k = fivek_cfg;
+//    sl_pwm_config_t pwm_cfg = {.frequency = 500000, .polarity = PWM_ACTIVE_HIGH};
+//
+//    sc = sl_pwm_init(&pwm_500k, &pwm_cfg);
+//    if(sc != SL_STATUS_OK)
+//    {
 //        app_log_error("Failed to initialize the Si1145 sensor\n");
 //        while(true); // crash here
 //    }
+//    else
+//    {
+//        sl_pwm_set_duty_cycle(&pwm_500k, 50);
+//        // Start Moisture Sensor Test
+//        sl_pwm_start(&pwm_500k);
+//    }
+//
+//    // Initialize Moisture Sensor
+//    uint32_t buff_sz = 8;
+//    // @formatter:off
+//    moisture_sensor_cfg_t cfg = {
+//            /* ADC Specific Configurations */
+//            .adc_clk_src = cmuClock_HFPER,      /**< Peripheral clock to use */
+//            .adc_osc_type = cmuOsc_AUXHFRCO,    /**< Oscillator type */
+//            .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
+//            .adc = ADC0,                        /**< ADC instance */
+//            .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
+//            .adc_channel = adcPosSelAPORT2XCH9, /**< ADC channel */
+//            .ref_volts = adcRef2V5,             // TODO: verify we can do adcRefVDD
+//            .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
+//            .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
+//            .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
+//
+//            /* DMA Specific Configurations */
+//            .dma_clk_src = cmuClock_LDMA,       /**< Peripheral clock to use DMA */
+//            .dma_channel = 0,                   /**< DMA channel */
+//            .dma_trig = ldmaPeripheralSignal_ADC0_SINGLE, /**< What signal triggers the DMA to start */
+//            .dest_buff = adcBuffer,             /**< Buffer were the ADC samples will be stored */
+//            .buff_size = buff_sz,               /**< Size of the buffer */
+//
+//            /* LETimer Specific Configurations */
+//            .let_osc_type = cmuOsc_LFRCO,       /**< Oscillator type */
+//            .let_clk_src = cmuClock_LFA,        /**< Peripheral clock to use DMA */
+//            .letimer = LETIMER0,                /**< LETimer Peripheral to use */
+//            .delay_ms = 100,                    /**< Time to wait till triggering ADC reading (ms) */
+//    };
+//        // @formatter:on
+//    ms_cfg = cfg;
+//    init_moisture_sensor(&ms_cfg);
 
-// TODO: Resolve port issues; When PWM enabled, Si1145 fails.
-
-    // Initialize 500kHz PWM signal out of GPIO D10
-    // @formatter:off
-    sl_pwm_instance_t fivek_cfg = {
-            .timer = TIMER0,
-            .channel = 0,       /**< TIMER channel */
-            .port = gpioPortD,  /**< GPIO port */
-            .pin = 10,          /**< GPIO pin */
-            .location = TIMER_ROUTELOC0_CC0LOC_LOC15 /**< GPIO location */
-        };
-        // @formatter:on
-    pwm_500k = fivek_cfg;
-    sl_pwm_config_t pwm_cfg = {.frequency = 500000, .polarity = PWM_ACTIVE_HIGH};
-
-    sc = sl_pwm_init(&pwm_500k, &pwm_cfg);
-    if(sc != SL_STATUS_OK)
-    {
-        app_log_error("Failed to initialize the Si1145 sensor\n");
-        while(true); // crash here
-    }
-    else
-    {
-        sl_pwm_set_duty_cycle(&pwm_500k, 50);
-        // Start Moisture Sensor Test
-        sl_pwm_start(&pwm_500k);
-    }
-
-    // Initialize Moisture Sensor
-    uint32_t buff_sz = 8;
-    // @formatter:off
-    moisture_sensor_cfg_t cfg = {
-            /* ADC Specific Configurations */
-            .adc_clk_src = cmuClock_HFPER,      /**< Peripheral clock to use */
-            .adc_osc_type = cmuOsc_AUXHFRCO,    /**< Oscillator type */
-            .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
-            .adc = ADC0,                        /**< ADC instance */
-            .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
-            .adc_channel = adcPosSelAPORT2XCH9, /**< ADC channel */
-            .ref_volts = adcRef2V5,             // TODO: verify we can do adcRefVDD
-            .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
-            .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
-            .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
-
-            /* DMA Specific Configurations */
-            .dma_clk_src = cmuClock_LDMA,       /**< Peripheral clock to use DMA */
-            .dma_channel = 0,                   /**< DMA channel */
-            .dma_trig = ldmaPeripheralSignal_ADC0_SINGLE, /**< What signal triggers the DMA to start */
-            .dest_buff = adcBuffer,             /**< Buffer were the ADC samples will be stored */
-            .buff_size = buff_sz,               /**< Size of the buffer */
-
-            /* LETimer Specific Configurations */
-            .let_osc_type = cmuOsc_LFRCO,       /**< Oscillator type */
-            .let_clk_src = cmuClock_LFA,        /**< Peripheral clock to use DMA */
-            .letimer = LETIMER0,                /**< LETimer Peripheral to use */
-            .delay_ms = 100,                    /**< Time to wait till triggering ADC reading (ms) */
+    bme280_init_t init_cfg = {
+        .opt_mode = BEM280_CMD_CTRL_MEAS_MODE_NORMAL,
+        .acqu_intvl = BME280_REG_CONFIG_T_SB_0_5_MS,
+        .temp_samp_rate = BEM280_CMD_CTRL_MEAS_OSRS_T_16X_SAMPLING,
+        .hum_samp_rate = BME280_REG_CTRL_HUM_OSRS_H_16X_SAMPLING,
+        .pres_samp_rate = BEM280_CMD_CTRL_MEAS_OSRS_P_16X_SAMPLING,
+        .filter = BME280_REG_CONFIG_FILTER_OFF
     };
-        // @formatter:on
-    ms_cfg = cfg;
-    init_moisture_sensor(&ms_cfg);
+    bme280_init(I2C0, init_cfg);
 }
 
 #ifndef SL_CATALOG_KERNEL_PRESENT
@@ -168,24 +180,37 @@ SL_WEAK void app_process_action(void)
 {
     // Start Si1145 Test
 //    float lux = 0.0, uvi = 0.0;
-//    if(si1145_measure_lux_uvi(I2C0, &lux, &uvi) == SL_STATUS_OK)
+//    if(si1145_get_lux_uvi(I2C0, &lux, &uvi) == SL_STATUS_OK)
 //    {
-//        app_log_info("Acquired Lux and UVI: %f & %f", lux, uvi);
+//        app_log_info("Acquired Lux and UVI: %f & %f \r\n", lux, uvi);
+//        fflush(stdout);
 //    }
 //    else
 //    {
-//        app_log_error("Failed to acquire lux and uvi readings\n");
+//        app_log_error("Failed to acquire lux and uvi readings \r\n");
+//        fflush(stdout);
 //        while(true); // crash here
 //    }
     // TODO: Fix Lux/UV init/math... values are always the same
 
-    int idx = 50; // Too lazy right now to add a real wait/delay
-    do
-    {
-        app_log_info("ADC samples current value is: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X", adcBuffer[0],
-                     adcBuffer[1], adcBuffer[2], adcBuffer[3], adcBuffer[4], adcBuffer[5], adcBuffer[6], adcBuffer[7]);
-    } while(idx--);
-    app_log_info("Moisture Sensor Demo Done!");
+//    int idx = 50; // Too lazy right now to add a real wait/delay
+//    do
+//    {
+//        app_log_info("ADC samples current value is: 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n", adcBuffer[0],
+//                     adcBuffer[1], adcBuffer[2], adcBuffer[3], adcBuffer[4], adcBuffer[5], adcBuffer[6], adcBuffer[7]);
+//    } while(idx--);
+//    app_log_info("Moisture Sensor Demo Done!\r\n");
+//    fflush(stdout);
+
+    // Samples should happen every .5 ms
+    sl_sleeptimer_delay_millisecond(10);
+    float temps = 0.0, press = 0.0, humid = 0.0;
+    temps = bme280_get_temperature();
+    press = bme280_get_pressure();
+    humid = bme280_get_humidity();
+    app_log_info("temp=%f, press=%f, humid=%f", temps, press, humid);
+    app_log_info("BME280 Test... Success?");
+    return;
 }
 #endif // SL_CATALOG_KERNEL_PRESENT
 

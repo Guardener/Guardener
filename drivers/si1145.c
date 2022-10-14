@@ -15,10 +15,10 @@
 #include <stdint.h>
 
 #define DLOGRET(...)                                                                                                   \
-  do {                                                                                                                 \
-    app_log_debug("%s: ", __VA_ARGS__);                                                                                \
-    sl_status_print(ret);                                                                                              \
-  } while (0)
+    do {                                                                                                               \
+        app_log_debug(__VA_ARGS__);                                                                                    \
+        sl_status_print(ret);                                                                                          \
+    } while (0)
 
 #define SI1145_I2C_DEVICE_BUS_ADDRESS (0x60)
 #define SI1145_UV_COEFF0_VAL (0x29)
@@ -35,25 +35,22 @@
 
 static bool uv_high_range_s = false, lux_high_range_s = false;
 
-sl_status_t si1145_wait_until_sleep(sl_i2cspm_t* i2cspm);
+sl_status_t si1145_wait_until_sleep(sl_i2cspm_t *i2cspm);
 
-/**************************************************************************//**
+/**************************************************************************/ /**
  *    Initializes the Si1145 chip
  *****************************************************************************/
-sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
-{
-    app_log_debug("Temp Sensor Initialization\n");
+sl_status_t si1145_init(sl_i2cspm_t *i2cspm) {
+    app_log_debug("Light Sensor Initialization\n");
     sl_status_t ret = SL_STATUS_OK;
-    if(!i2cspm)
-    {
+    if (!i2cspm) {
         return SL_STATUS_NULL_POINTER;
     }
 
     /* Check that Si1145 is on the bus */
     uint8_t data = 0x00;
     ret += si1145_read_register(i2cspm, SI1145_REG_PART_ID, &data);
-    if(data != SI1145_PART_ID_VAL)
-    {
+    if (data != SI1145_PART_ID_VAL) {
         return SL_STATUS_NOT_FOUND;
     }
 
@@ -69,11 +66,10 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
     DLOGRET("Enable UV Coefficients");
 
     /* Enable Sensor's Features */
-    ret += si1145_set_parameter(
-            i2cspm,
-            SI1145_PARAM_CHLIST,
-            SI1145_PARAM_CHLIST_EN_UV | SI1145_PARAM_CHLIST_EN_AUX | SI1145_PARAM_CHLIST_EN_EN_ALS_IR
-                    | SI1145_PARAM_CHLIST_EN_EN_ALS_VIS | SI1145_PARAM_CHLIST_EN_PS1);
+    ret +=
+        si1145_set_parameter(i2cspm, SI1145_PARAM_CHLIST,
+                             SI1145_PARAM_CHLIST_EN_UV | SI1145_PARAM_CHLIST_EN_AUX | SI1145_PARAM_CHLIST_EN_EN_ALS_IR |
+                                 SI1145_PARAM_CHLIST_EN_EN_ALS_VIS | SI1145_PARAM_CHLIST_EN_PS1);
 
     // Clear error counter & register
     ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND, SI1145_CMD_NOP);
@@ -122,43 +118,38 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm)
     ret += si1145_write_register(i2cspm, SI1145_REG_COMMAND, SI1145_CMD_PSALS_AUTO);
     DLOGRET("Set rate and run auto mode");
 
-    if(ret != SL_STATUS_OK)
-    {
+    if (ret != SL_STATUS_OK) {
         ret = SL_STATUS_INITIALIZATION;
     }
 
     return ret;
 }
 
-/*********************************************************************************//**
- * Stops the measurements on all channel and waits until the chip goes to sleep state.
- *************************************************************************************/
-sl_status_t si1145_deinit(sl_i2cspm_t* i2cspm)
-{
+/*********************************************************************************/ /**
+* Stops the measurements on all channel and waits until the chip goes to sleep state.
+*************************************************************************************/
+sl_status_t si1145_deinit(sl_i2cspm_t *i2cspm) {
     sl_status_t ret = SL_STATUS_OK;
-    ret = si1145_set_parameter(
-            i2cspm,
-            SI1145_PARAM_CHLIST,
-            SI1145_PARAM_CHLIST_EN_UV | SI1145_PARAM_CHLIST_EN_AUX | SI1145_PARAM_CHLIST_EN_EN_ALS_IR
-                    | SI1145_PARAM_CHLIST_EN_EN_ALS_VIS | SI1145_PARAM_CHLIST_EN_PS1);
-    if(ret != SL_STATUS_OK)
-    {
+    ret =
+        si1145_set_parameter(i2cspm, SI1145_PARAM_CHLIST,
+                             SI1145_PARAM_CHLIST_EN_UV | SI1145_PARAM_CHLIST_EN_AUX | SI1145_PARAM_CHLIST_EN_EN_ALS_IR |
+                                 SI1145_PARAM_CHLIST_EN_EN_ALS_VIS | SI1145_PARAM_CHLIST_EN_PS1);
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
     ret = si1145_pause_measurement(i2cspm);
-    if(ret != SL_STATUS_OK)
-    {
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
     ret = si1145_wait_until_sleep(i2cspm);
     return ret;
 }
 
-/***************************************************************************//**
- *    Measure lux and UV index using the Si1145 sensor
+/***************************************************************************/ /**
+ *    Measure lux and UV index using the
+ *Si1145 sensor
  ******************************************************************************/
-sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
-{
+sl_status_t si1145_get_lux_uvi(sl_i2cspm_t *i2cspm, float *lux, float *uvi) {
     sl_status_t ret = SL_STATUS_OK;
     float _lux;
     float _uvi;
@@ -172,44 +163,42 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
     // Max wait ~ 9.84ms
     sl_sleeptimer_delay_millisecond(12);
     ret += si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &data1);
-    switch(data1)
-    {
-        case SI1145_ERRRSP_INVALID_SETTING:
-        case SI1145_ERRRSP_PS1_ADC_OVERFLOW:
-        case SI1145_ERRRSP_PS2_ADC_OVERFLOW:
-        case SI1145_ERRRSP_PS3_ADC_OVERFLOW:
-            app_log_error("Si1145 error: 0x%X\n", data1);
-            get_vis = true;
-            get_ir = true;
-            get_uv = true;
-            break;
-        case SI1145_ERRRSP_ALS_VIS_ADC_OVERFLOW:
-            app_log_error("Si1145 error: 0x%X\n", data1);
-            vis = 0x7FFF;
-            get_ir = true;
-            get_uv = true;
-            break;
-        case SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW:
-            app_log_error("Si1145 error: 0x%X\n", data1);
-            get_vis = true;
-            ir = 0x7FFF;
-            get_uv = true;
-            break;
-        case SI1145_ERRRSP_AUX_ADC_OVERFLOW:
-            app_log_error("Si1145 error: 0x%X\n", data1);
-            get_vis = true;
-            get_ir = true;
-            uv = SI1145_REF_UV_OFFSET;
-            break;
-        default:
-            get_vis = true;
-            get_ir = true;
-            get_uv = true;
-            break;
+    switch (data1) {
+    case SI1145_ERRRSP_INVALID_SETTING:
+    case SI1145_ERRRSP_PS1_ADC_OVERFLOW:
+    case SI1145_ERRRSP_PS2_ADC_OVERFLOW:
+    case SI1145_ERRRSP_PS3_ADC_OVERFLOW:
+        app_log_error("Si1145 error: 0x%X\n", data1);
+        get_vis = true;
+        get_ir = true;
+        get_uv = true;
+        break;
+    case SI1145_ERRRSP_ALS_VIS_ADC_OVERFLOW:
+        app_log_error("Si1145 error: 0x%X\n", data1);
+        vis = 0x7FFF;
+        get_ir = true;
+        get_uv = true;
+        break;
+    case SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW:
+        app_log_error("Si1145 error: 0x%X\n", data1);
+        get_vis = true;
+        ir = 0x7FFF;
+        get_uv = true;
+        break;
+    case SI1145_ERRRSP_AUX_ADC_OVERFLOW:
+        app_log_error("Si1145 error: 0x%X\n", data1);
+        get_vis = true;
+        get_ir = true;
+        uv = SI1145_REF_UV_OFFSET;
+        break;
+    default:
+        get_vis = true;
+        get_ir = true;
+        get_uv = true;
+        break;
     }
 
-    if(get_vis)
-    {
+    if (get_vis) {
         data1 = 0x00;
         data2 = 0x00;
         ret += si1145_read_register(i2cspm, SI1145_REG_ALS_VIS_DATA0, &data1);
@@ -218,8 +207,7 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
         DLOGRET("Retrieved VIS Data");
     }
 
-    if(get_ir)
-    {
+    if (get_ir) {
         data1 = 0x00;
         data2 = 0x00;
         ret += si1145_read_register(i2cspm, SI1145_REG_ALS_IR_DATA0, &data1);
@@ -227,8 +215,7 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
         ir = data1 | (data2 << 8);
     }
 
-    if(get_uv)
-    {
+    if (get_uv) {
         data1 = 0x00;
         data2 = 0x00;
         ret += si1145_read_register(i2cspm, SI1145_REG_AUX_DATA0_UVINDEX0, &data1);
@@ -245,14 +232,12 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
     ret += si1145_write_register(i2cspm, SI1145_REG_IRQ_STATUS, 0);
 
     // Temperature compensation: SI1145_REF_UV_OFFSET at 25C give about 35 ADC count per degree C
-    if(lux_high_range_s)
-    {
+    if (lux_high_range_s) {
         _lux = vis;
     }
     _lux = vis - SI1145_SELECTED_LUX_GAIN * (uv - SI1145_REF_UV_OFFSET) / 35.0;
 
-    if(uv_high_range_s)
-    {
+    if (uv_high_range_s) {
         _uvi = ir;
     }
     _uvi = ir - SI1145_SELECTED_UV_GAIN * (uv - SI1145_REF_UV_OFFSET) / 35.0;
@@ -262,15 +247,12 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
     float _range_ir = ((!uv_high_range_s) ? 1.0 : 14.5);
 
     // See AN523.6 for conversion to lux equation
-    _lux = (5.41f * _lux * _range_vis) / pow(2, SI1145_SELECTED_LUX_GAIN)
-            + (-0.08f * _uvi * _range_ir) / pow(2, SI1145_SELECTED_UV_GAIN);
+    _lux = (5.41f * _lux * _range_vis) / pow(2, SI1145_SELECTED_LUX_GAIN) +
+           (-0.08f * _uvi * _range_ir) / pow(2, SI1145_SELECTED_UV_GAIN);
 
-    if(_lux < 0.0)
-    {
+    if (_lux < 0.0) {
         *lux = (float)0.0;
-    }
-    else
-    {
+    } else {
         *lux = _lux;
     }
 
@@ -279,15 +261,15 @@ sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi)
     return ret;
 }
 
-/***************************************************************************//**
- *    Reads register from the Si1145 sensor
+/***************************************************************************/ /**
+ *    Reads register from the Si1145
+ *sensor
  ******************************************************************************/
-sl_status_t si1145_read_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t* data)
-{
+sl_status_t si1145_read_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t *data) {
     I2C_TransferSeq_TypeDef seq;
     I2C_TransferReturn_TypeDef retval;
     uint8_t i2c_write_data[1];
-    sl_status_t ret = ((sl_status_t)0x0000); ///< No error.
+    sl_status_t ret = SL_STATUS_OK;
 
     seq.addr = SI1145_I2C_DEVICE_BUS_ADDRESS << 1;
     seq.flags = I2C_FLAG_WRITE_READ;
@@ -300,8 +282,7 @@ sl_status_t si1145_read_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t* data
     seq.buf[1].len = 1;
 
     retval = I2CSPM_Transfer(i2cspm, &seq);
-    if(retval != i2cTransferDone)
-    {
+    if (retval != i2cTransferDone) {
         *data = 0xff;
         ret = SL_STATUS_TRANSMIT;
     }
@@ -309,11 +290,10 @@ sl_status_t si1145_read_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t* data
     return ret;
 }
 
-/***************************************************************************//**
+/***************************************************************************/ /**
  *    Writes register in the Si1145 sensor
  ******************************************************************************/
-sl_status_t si1145_write_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t data)
-{
+sl_status_t si1145_write_register(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t data) {
     I2C_TransferSeq_TypeDef seq;
     I2C_TransferReturn_TypeDef retval;
     uint8_t i2c_write_data[2];
@@ -331,19 +311,18 @@ sl_status_t si1145_write_register(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t data
     seq.buf[1].len = 0;
 
     retval = I2CSPM_Transfer(i2cspm, &seq);
-    if(retval != i2cTransferDone)
-    {
+    if (retval != i2cTransferDone) {
         ret = SL_STATUS_TRANSMIT;
     }
 
     return ret;
 }
 
-/***************************************************************************//**
- *    Writes a block of data to the Si1145 sensor.
+/***************************************************************************/ /**
+ *    Writes a block of data to the Si1145
+ *sensor.
  ******************************************************************************/
-sl_status_t si1145_write_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t length, const uint8_t* data)
-{
+sl_status_t si1145_write_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length, const uint8_t *data) {
     I2C_TransferSeq_TypeDef seq;
     I2C_TransferReturn_TypeDef retval;
     uint8_t i2c_write_data[10];
@@ -355,8 +334,7 @@ sl_status_t si1145_write_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_
     seq.flags = I2C_FLAG_WRITE;
     /* Select register to start writing to*/
     i2c_write_data[0] = reg;
-    for(i = 0; i < length; i++)
-    {
+    for (i = 0; i < length; i++) {
         i2c_write_data[i + 1] = data[i];
     }
     seq.buf[0].data = i2c_write_data;
@@ -365,19 +343,18 @@ sl_status_t si1145_write_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_
     seq.buf[1].len = 0;
 
     retval = I2CSPM_Transfer(i2cspm, &seq);
-    if(retval != i2cTransferDone)
-    {
+    if (retval != i2cTransferDone) {
         ret = SL_STATUS_TRANSMIT;
     }
 
     return ret;
 }
 
-/***************************************************************************//**
- *    Reads a block of data from the Si1145 sensor.
+/***************************************************************************/ /**
+ *    Reads a block of data from the
+ *Si1145 sensor.
  ******************************************************************************/
-sl_status_t si1145_read_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t length, uint8_t* data)
-{
+sl_status_t si1145_read_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t length, uint8_t *data) {
     I2C_TransferSeq_TypeDef seq;
     I2C_TransferReturn_TypeDef retval;
     uint8_t i2c_write_data[1];
@@ -394,40 +371,37 @@ sl_status_t si1145_read_register_block(sl_i2cspm_t* i2cspm, uint8_t reg, uint8_t
     seq.buf[1].len = length;
 
     retval = I2CSPM_Transfer(i2cspm, &seq);
-    if(retval != i2cTransferDone)
-    {
+    if (retval != i2cTransferDone) {
         ret = SL_STATUS_TRANSMIT;
     }
 
     return ret;
 }
 
-/***************************************************************************//**
+/***************************************************************************/ /**
  * @brief
- *    Waits until the Si1145 is sleeping before proceeding
+ *    Waits until the Si1145 is sleeping
+ *before proceeding
  *
  * @return
  *    @ret SL_STATUS_OK Success
- *    @ret SL_STATUS_TRANSMIT I2C transmit failure
+ *    @ret SL_STATUS_TRANSMIT I2C transmit
+ *failure
  ******************************************************************************/
-sl_status_t si1145_wait_until_sleep(sl_i2cspm_t* i2cspm)
-{
+sl_status_t si1145_wait_until_sleep(sl_i2cspm_t *i2cspm) {
     uint8_t response;
     uint8_t count = 0;
     sl_status_t ret = SL_STATUS_OK;
 
     /* This loops until the Si1145 is known to be in its sleep state  */
     /* or if an i2c error occurs                                      */
-    while(count < 5)
-    {
+    while (count < 5) {
         ret = si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &response);
-        if((response & SI1145_RSP0_CHIPSTAT_MASK) == SI1145_RSP0_SLEEP)
-        {
+        if ((response & SI1145_RSP0_CHIPSTAT_MASK) == SI1145_RSP0_SLEEP) {
             break;
         }
 
-        if(ret != SL_STATUS_OK)
-        {
+        if (ret != SL_STATUS_OK) {
             return ret;
         }
 
@@ -437,11 +411,10 @@ sl_status_t si1145_wait_until_sleep(sl_i2cspm_t* i2cspm)
     return ret;
 }
 
-/***************************************************************************//**
+/***************************************************************************/ /**
  *    Resets the Si1145
  ******************************************************************************/
-sl_status_t si1145_reset(sl_i2cspm_t* i2cspm)
-{
+sl_status_t si1145_reset(sl_i2cspm_t *i2cspm) {
     sl_status_t ret = SL_STATUS_OK;
 
     /* Perform the Reset Command */
@@ -462,11 +435,11 @@ sl_status_t si1145_reset(sl_i2cspm_t* i2cspm)
     return ret;
 }
 
-/***************************************************************************//**
- *    Helper function to send a command to the Si1145
+/***************************************************************************/ /**
+ *    Helper function to send a command to
+ *the Si1145
  ******************************************************************************/
-sl_status_t si1145_send_command(sl_i2cspm_t* i2cspm, uint8_t command)
-{
+sl_status_t si1145_send_command(sl_i2cspm_t *i2cspm, uint8_t command) {
     uint8_t response;
     uint8_t response_stored;
     uint8_t count = 0;
@@ -474,41 +447,31 @@ sl_status_t si1145_send_command(sl_i2cspm_t* i2cspm, uint8_t command)
 
     /* Get the response register contents */
     ret = si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &response_stored);
-    if(ret != SL_STATUS_OK)
-    {
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
 
     response_stored = response_stored & SI1145_RSP0_CHIPSTAT_MASK;
 
     /* Double-check the response register is consistent */
-    while(count < 5)
-    {
+    while (count < 5) {
         ret = si1145_wait_until_sleep(i2cspm);
-        if(ret != SL_STATUS_OK)
-        {
+        if (ret != SL_STATUS_OK) {
             return ret;
         }
         /* Skip if the command is RESET COMMAND COUNTER */
-        if(command == SI1145_CMD_NOP)
-        {
+        if (command == SI1145_CMD_NOP) {
             break;
         }
 
         ret = si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &response);
 
-        if((response & SI1145_RSP0_CHIPSTAT_MASK) == response_stored)
-        {
+        if ((response & SI1145_RSP0_CHIPSTAT_MASK) == response_stored) {
             break;
-        }
-        else
-        {
-            if(ret != SL_STATUS_OK)
-            {
+        } else {
+            if (ret != SL_STATUS_OK) {
                 return ret;
-            }
-            else
-            {
+            } else {
                 response_stored = response & SI1145_RSP0_CHIPSTAT_MASK;
             }
         }
@@ -518,30 +481,23 @@ sl_status_t si1145_send_command(sl_i2cspm_t* i2cspm, uint8_t command)
 
     /* Send the command */
     ret = si1145_write_register(i2cspm, SI1145_REG_COMMAND, command);
-    if(ret != SL_STATUS_OK)
-    {
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
 
     count = 0;
     /* Expect a change in the response register */
-    while(count < 5)
-    {
+    while (count < 5) {
         /* Skip if the command is RESET COMMAND COUNTER */
-        if(command == SI1145_CMD_NOP)
-        {
+        if (command == SI1145_CMD_NOP) {
             break;
         }
 
         ret = si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &response);
-        if((response & SI1145_RSP0_CHIPSTAT_MASK) != response_stored)
-        {
+        if ((response & SI1145_RSP0_CHIPSTAT_MASK) != response_stored) {
             break;
-        }
-        else
-        {
-            if(ret != SL_STATUS_OK)
-            {
+        } else {
+            if (ret != SL_STATUS_OK) {
                 return ret;
             }
         }
@@ -552,11 +508,10 @@ sl_status_t si1145_send_command(sl_i2cspm_t* i2cspm, uint8_t command)
     return SL_STATUS_OK;
 }
 
-/***************************************************************************//**
+/***************************************************************************/ /**
  *    Writes a byte to an Si1145 Parameter
  ******************************************************************************/
-sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t value)
-{
+sl_status_t si1145_set_parameter(sl_i2cspm_t *i2cspm, uint8_t address, uint8_t value) {
     sl_status_t ret = SL_STATUS_OK;
     uint8_t buffer[2];
     uint8_t response_stored;
@@ -564,8 +519,7 @@ sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t v
     uint8_t count;
 
     ret = si1145_wait_until_sleep(i2cspm);
-    if(ret != SL_STATUS_OK)
-    {
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
 
@@ -575,26 +529,20 @@ sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t v
     buffer[0] = value;
     buffer[1] = 0x80 + (address & 0x3F);
 
-    ret = si1145_write_register_block(i2cspm, SI1145_REG_PARAM_WR, 2, (uint8_t*)buffer);
-    if(ret != SL_STATUS_OK)
-    {
+    ret = si1145_write_register_block(i2cspm, SI1145_REG_PARAM_WR, 2, (uint8_t *)buffer);
+    if (ret != SL_STATUS_OK) {
         return ret;
     }
 
     /* Wait for command to finish */
     count = 0;
     /* Expect a change in the response register */
-    while(count < 5)
-    {
+    while (count < 5) {
         ret = si1145_read_register(i2cspm, SI1145_REG_RESPONSE, &response);
-        if((response & SI1145_RSP0_CHIPSTAT_MASK) != response_stored)
-        {
+        if ((response & SI1145_RSP0_CHIPSTAT_MASK) != response_stored) {
             break;
-        }
-        else
-        {
-            if(ret != SL_STATUS_OK)
-            {
+        } else {
+            if (ret != SL_STATUS_OK) {
                 return ret;
             }
         }
@@ -605,11 +553,10 @@ sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t v
     return SL_STATUS_OK;
 }
 
-/***************************************************************************//**
+/***************************************************************************/ /**
  *    Sends a PAUSE command to the Si1145
  ******************************************************************************/
-sl_status_t si1145_pause_measurement(sl_i2cspm_t* i2cspm)
-{
+sl_status_t si1145_pause_measurement(sl_i2cspm_t *i2cspm) {
     sl_status_t ret = si1145_send_command(i2cspm, SI1145_CMD_PS_PAUSE);
     ret += si1145_send_command(i2cspm, SI1145_CMD_ALS_PAUSE);
     ret += si1145_send_command(i2cspm, SI1145_CMD_PSALS_PAUSE);
