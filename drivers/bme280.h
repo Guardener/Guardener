@@ -1,194 +1,395 @@
-/*******************************************************************************
- * @file bme280.h
- *
- *  Created on: Oct 12, 2022
- *      Author: Caleb Provost
- *
- * @brief Bosch's BME280: Digital humidity, pressure and temperature sensor
- * @see   www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme280-ds002.pdf
- * @note  Code structure created following existing SiLabs driver methodology
- *
- ******************************************************************************/
-#ifndef DRIVERS_BME280_H_
-#define DRIVERS_BME280_H_
+/**
+* Copyright (c) 2020 Bosch Sensortec GmbH. All rights reserved.
+*
+* BSD-3-Clause
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* 3. Neither the name of the copyright holder nor the names of its
+*    contributors may be used to endorse or promote products derived from
+*    this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+* COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+*
+* @file       bme280.h
+* @date       2020-03-28
+* @version    v3.5.0
+*
+*/
 
-#include <stdint.h>
-#include "sl_i2cspm.h"
-#include "sl_status.h"
+/*! @file bme280.h
+ * @brief Sensor driver for BME280 sensor
+ */
 
-#ifdef __cpluspluc
+/*!
+ * @defgroup bme280 BME280
+ * @brief <a href="https://www.bosch-sensortec.com/bst/products/all_products/bme280">Product Overview</a>
+ * and  <a href="https://github.com/BoschSensortec/BME280_driver">Sensor API Source Code</a>
+ */
+
+#ifndef BME280_H_
+#define BME280_H_
+
+/*! CPP guard */
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#define BME280_I2C_DEVICE_BUS_ADDRESS (0x76) // alt addr: 0x76 or 0x77
+/* Header includes */
+#include "bme280_defs.h"
 
-/**************************************************************************//**
- * @brief BME280 register definitions
- * @see Page 27 of Data Sheet
- ******************************************************************************/
-#define BME280_REG_HUM_LSB    (0xFE) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_HUM_MSB    (0xFD) /**< Read Only Register; Reset State = 0x80 */
-#define BME280_REG_TEMP_XLSB  (0xFC) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_TEMP_LSB   (0xFB) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_TEMP_MSB   (0xFA) /**< Read Only Register; Reset State = 0x80 */
-#define BME280_REG_PRESS_XLSB (0xF9) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_PRESS_LSB  (0xF8) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_PRESS_MSB  (0xF7) /**< Read Only Register; Reset State = 0x80 */
-#define BME280_REG_CONFIG     (0xF5) /**< Read/Write Register; Reset State = 0x00 */
-#define BME280_REG_CTRL_MEAS  (0xF4) /**< Read/Write Register; Reset State = 0x00 */
-#define BME280_REG_STATUS     (0xF3) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_STATUS_UPDATING_BIT (0)
-#define BME280_STATUS_MEASURING_BIT (3)
-#define BME280_REG_CTRL_HUM   (0xF2) /**< Read Only Register; Reset State = 0x00 */
-#define BME280_REG_CALIB26    (0xE1) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB27    (0xE2) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB28    (0xE3) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB29    (0xE4) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB30    (0xE5) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB31    (0xE6) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB32    (0xE7) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB33    (0xE8) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB34    (0xE9) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB35    (0xEA) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB36    (0xEB) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB37    (0xEC) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB38    (0xED) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB39    (0xEE) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB40    (0xEF) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB41    (0xF0) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_RESET      (0xE0) /**< Write Only Register; Reset State = 0x00 */
-#define BME280_REG_ID         (0xD0) /**< Read Only Register; Reset State = 0x60 */
-#define BME280_REG_CALIB00    (0x88) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB01    (0x89) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB02    (0x8A) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB03    (0x8B) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB04    (0x8C) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB05    (0x8D) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB06    (0x8E) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB07    (0x8F) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB08    (0x90) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB09    (0x91) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB10    (0x92) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB11    (0x93) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB12    (0x94) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB13    (0x95) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB14    (0x96) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB15    (0x97) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB16    (0x98) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB17    (0x99) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB18    (0x9A) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB19    (0x9B) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB20    (0x9C) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB21    (0x9D) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB22    (0x9E) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB23    (0x9F) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB24    (0xA0) /**< Read Only Calibration Register; Reset State = individual */
-#define BME280_REG_CALIB25    (0xA1) /**< Read Only Calibration Register; Reset State = individual */
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiInit Initialization
+ * @brief Initialize the sensor and device structure
+ */
 
-#define BME280_CHIP_ID        (0x60) /**< The expected response fron BME280_REG_ID */
-#define BME280_UPDATING_CHECK(status_ret) (status_ret & (1 << BME280_STATUS_UPDATING_BIT))
-#define BME280_MEASURING_CHECK(resp)  (resp & (1 << BME280_STATUS_MEASURING_BIT))
+/*!
+ * \ingroup bme280ApiInit
+ * \page bme280_api_bme280_init bme280_init
+ * \code
+ * int8_t bme280_init(struct bme280_dev *dev);
+ * \endcode
+ * @details This API reads the chip-id of the sensor which is the first step to
+ * verify the sensor and also calibrates the sensor
+ * As this API is the entry point, call this API before using other APIs.
+ *
+ * @param[in,out] dev : Structure instance of bme280_dev
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_init(struct bme280_dev *dev);
 
-/**************************************************************************//**
- * @brief BME280 Register Commands
- ******************************************************************************/
-#define BME280_CMD_RESET_POWER_ON                 (0xB6)  /**< When written to BME280_REG_RESET, device is reset using the complete power-on-reset procedure. */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_0X_SAMPLING   (0x00)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_1X_SAMPLING   (0x20)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_2X_SAMPLING   (0x40)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_4X_SAMPLING   (0x60)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_8X_SAMPLING   (0x80)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_T_16X_SAMPLING  (0x50)  /**< Data acquisition sampling rates for Temperature */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_0X_SAMPLING   (0x00)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_1X_SAMPLING   (0x04)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_2X_SAMPLING   (0x08)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_4X_SAMPLING   (0x0C)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_8X_SAMPLING   (0x10)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_OSRS_P_16X_SAMPLING  (0x14)  /**< Data acquisition sampling rates for Pressure */
-#define BEM280_CMD_CTRL_MEAS_MODE_NORMAL          (0x03)  /**< Controls the sensor mode of the device */
-#define BEM280_CMD_CTRL_MEAS_MODE_FORCE           (0x02)  /**< Controls the sensor mode of the device */
-#define BEM280_CMD_CTRL_MEAS_MODE_FORCED          (0x01)  /**< Controls the sensor mode of the device */
-#define BEM280_CMD_CTRL_MEAS_MODE_SLEEP           (0x00)  /**< Controls the sensor mode of the device */
-#define BME280_REG_CTRL_HUM_OSRS_H_0X_SAMPLING    (0x00)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CTRL_HUM_OSRS_H_1X_SAMPLING    (0x01)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CTRL_HUM_OSRS_H_2X_SAMPLING    (0x02)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CTRL_HUM_OSRS_H_4X_SAMPLING    (0x03)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CTRL_HUM_OSRS_H_8X_SAMPLING    (0x04)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CTRL_HUM_OSRS_H_16X_SAMPLING   (0x05)  /**< Data acquisition sampling rates for Humidity */
-#define BME280_REG_CONFIG_T_SB_0_5_MS             (0x00)  /**< 0.5 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_62_5_MS            (0x20)  /**< 62.5 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_125_MS             (0x40)  /**< 125 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_250_MS             (0x60)  /**< 250 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_500_MS             (0x80)  /**< 500 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_1_S                (0xA0)  /**< 1000 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_10_MS              (0xC0)  /**< 10 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_T_SB_20_MS              (0xE0)  /**< 20 ms inactive standby duration in normal mode */
-#define BME280_REG_CONFIG_I2C                     (0x00)  /**< Enables I2C Bus Interface */
-#define BME280_REG_CONFIG_SPI                     (0x01)  /**< Enables SPI Bus Interface */
-#define BME280_REG_CONFIG_FILTER_OFF              (0x00)  /**< 1 Step Filtering Response */
-#define BME280_REG_CONFIG_FILTER_2                (0x02)  /**< 2 Step Filtering Response */
-#define BME280_REG_CONFIG_FILTER_4                (0x04)  /**< 5 Step Filtering Response */
-#define BME280_REG_CONFIG_FILTER_8                (0x06)  /**< 11 Step Filtering Response */
-#define BME280_REG_CONFIG_FILTER_16               (0x08)  /**< 22 Step Filtering Response */
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiRegister Registers
+ * @brief Generic API for accessing sensor registers
+ */
 
-/**************************************************************************//**
- * @brief BME280 Temp, Pressure, & Humidity Compensation Parameters
- * @see Page 24 of Data Sheet
- * @note From Data Sheet:
- *            The trimming parameters are programmed into the devices’ 
- *            non-volatile memory (NVM) during production and cannot be altered
- *            by the customer. Each compensation word is a 16-bit signed or 
- *            unsigned integer value stored in two’s complement. As the memory
- *            is organized into 8-bit words, two words must always be combined
- *            in order to represent the compensation word. The 8-bit registers
- *            are named calib00…calib41 and are stored at memory addresses
- *            0x88…0xA1 and 0xE1…0xE7. The corresponding compensation words
- *            are named dig_T# for temperature compensation related values,
- *            dig_P# for pressure related values and dig_H# for humidity
- *            related values.
- ******************************************************************************/
-typedef struct
-{
-    uint16_t dig_T1; /**< Corresponding Register Location: 0x88 / 0x89 */
-    int16_t dig_T2; /**< Corresponding Register Location: 0x8A / 0x8B */
-    int16_t dig_T3; /**< Corresponding Register Location: 0x8C / 0x8D */
-    uint16_t dig_P1; /**< Corresponding Register Location: 0x8E / 0x8F */
-    int16_t dig_P2; /**< Corresponding Register Location: 0x90 / 0x91 */
-    int16_t dig_P3; /**< Corresponding Register Location: 0x92 / 0x93 */
-    int16_t dig_P4; /**< Corresponding Register Location: 0x94 / 0x95 */
-    int16_t dig_P5; /**< Corresponding Register Location: 0x96 / 0x97 */
-    int16_t dig_P6; /**< Corresponding Register Location: 0x98 / 0x99 */
-    int16_t dig_P7; /**< Corresponding Register Location: 0x9A / 0x9B */
-    int16_t dig_P8; /**< Corresponding Register Location: 0x9C / 0x9D */
-    int16_t dig_P9; /**< Corresponding Register Location: 0x9E / 0x9F */
-    uint8_t dig_H1; /**< Corresponding Register Location: 0xA1  */
-    int16_t dig_H2; /**< Corresponding Register Location: 0xE1 / 0xE2 */
-    uint8_t dig_H3; /**< Corresponding Register Location: 0xE3  */
-    int16_t dig_H4; /**< Corresponding Register Location: 0xE4 / 0xE5[3:0]  */
-    int16_t dig_H5; /**< Corresponding Register Location: 0xE5[7:4] / 0xE6  */
-    int8_t dig_H6; /**< Corresponding Register Location: 0xE7  */
-} bme280_calib_t;
+/*!
+ * \ingroup bme280ApiRegister
+ * \page bme280_api_bme280_set_regs bme280_set_regs
+ * \code
+ * int8_t bme280_set_regs(const uint8_t reg_addr, const uint8_t *reg_data, uint8_t len, struct bme280_dev *dev);
+ * \endcode
+ * @details This API writes the given data to the register address of the sensor
+ *
+ * @param[in] reg_addr : Register addresses to where the data is to be written
+ * @param[in] reg_data : Pointer to data buffer which is to be written
+ *                       in the reg_addr of sensor.
+ * @param[in] len      : No of bytes of data to write
+ * @param[in,out] dev  : Structure instance of bme280_dev
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len, struct bme280_dev *dev);
 
-typedef struct
-{
-    uint8_t opt_mode; /**< Operational mode of micro */
-    uint8_t acqu_intvl; /**< Intervals between sampling; Ignored in FORCED mode */
-    uint8_t temp_samp_rate; /**< Sampling rate for temperature */
-    uint8_t hum_samp_rate; /**< Sampling rate for humidity */
-    uint8_t pres_samp_rate; /**< Sampling rate for pressure */
-    uint8_t filter; /**< IIR Filtering for acquired samples */
-} bme280_init_t;
+/*!
+ * \ingroup bme280ApiRegister
+ * \page bme280_api_bme280_get_regs bme280_get_regs
+ * \code
+ * int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint8_t len, struct bme280_dev *dev);
+ * \endcode
+ * @details This API reads the data from the given register address of sensor.
+ *
+ * @param[in] reg_addr  : Register address from where the data to be read
+ * @param[out] reg_data : Pointer to data buffer to store the read data.
+ * @param[in] len       : No of bytes of data to be read.
+ * @param[in,out] dev   : Structure instance of bme280_dev.
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_regs(uint8_t reg_addr, uint8_t *reg_data, uint16_t len, struct bme280_dev *dev);
 
-sl_status_t bme280_init(sl_i2cspm_t* i2cspm, bme280_init_t init);
-sl_status_t bme280_deinit(void);
-sl_status_t bme280_force_trigger_measurements(void);
-float bme280_get_temperature(void);
-float bme280_get_pressure(void);
-float bme280_get_humidity(void);
-float bme280_get_altitude(float seaLevel);
-float bme280_get_sealevel(float altitude, float atmospheric);
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiSensorSettings Sensor Settings
+ * @brief Generic API for accessing sensor settings
+ */
 
-#ifdef __cpluspluc
+/*!
+ * \ingroup bme280ApiSensorSettings
+ * \page bme280_api_bme280_set_sensor_settings bme280_set_sensor_settings
+ * \code
+ * int8_t bme280_set_sensor_settings(uint8_t desired_settings, const struct bme280_dev *dev);
+ * \endcode
+ * @details This API sets the oversampling, filter and standby duration
+ * (normal mode) settings in the sensor.
+ *
+ * @param[in] dev : Structure instance of bme280_dev.
+ * @param[in] desired_settings : Variable used to select the settings which
+ * are to be set in the sensor.
+ *
+ * @note : Below are the macros to be used by the user for selecting the
+ * desired settings. User can do OR operation of these macros for configuring
+ * multiple settings.
+ *
+ * Macros         |   Functionality
+ * -----------------------|----------------------------------------------
+ * BME280_OSR_PRESS_SEL    |   To set pressure oversampling.
+ * BME280_OSR_TEMP_SEL     |   To set temperature oversampling.
+ * BME280_OSR_HUM_SEL    |   To set humidity oversampling.
+ * BME280_FILTER_SEL     |   To set filter setting.
+ * BME280_STANDBY_SEL  |   To set standby duration setting.
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_set_sensor_settings(uint8_t desired_settings, struct bme280_dev *dev);
+
+/*!
+ * \ingroup bme280ApiSensorSettings
+ * \page bme280_api_bme280_get_sensor_settings bme280_get_sensor_settings
+ * \code
+ * int8_t bme280_get_sensor_settings(struct bme280_dev *dev);
+ * \endcode
+ * @details This API gets the oversampling, filter and standby duration
+ * (normal mode) settings from the sensor.
+ *
+ * @param[in,out] dev : Structure instance of bme280_dev.
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_sensor_settings(struct bme280_dev *dev);
+
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiSensorMode Sensor Mode
+ * @brief Generic API for configuring sensor power mode
+ */
+
+/*!
+ * \ingroup bme280ApiSensorMode
+ * \page bme280_api_bme280_set_sensor_mode bme280_set_sensor_mode
+ * \code
+ * int8_t bme280_set_sensor_mode(uint8_t sensor_mode, const struct bme280_dev *dev);
+ * \endcode
+ * @details This API sets the power mode of the sensor.
+ *
+ * @param[in] dev : Structure instance of bme280_dev.
+ * @param[in] sensor_mode : Variable which contains the power mode to be set.
+ *
+ *    sensor_mode           |   Macros
+ * ---------------------|-------------------
+ *     0                | BME280_SLEEP_MODE
+ *     1                | BME280_FORCED_MODE
+ *     3                | BME280_NORMAL_MODE
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_set_sensor_mode(uint8_t sensor_mode, struct bme280_dev *dev);
+
+/*!
+ * \ingroup bme280ApiSensorMode
+ * \page bme280_api_bme280_get_sensor_mode bme280_get_sensor_mode
+ * \code
+ * int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, const struct bme280_dev *dev);
+ * \endcode
+ * @details This API gets the power mode of the sensor.
+ *
+ * @param[in] dev : Structure instance of bme280_dev.
+ * @param[out] sensor_mode : Pointer variable to store the power mode.
+ *
+ *   sensor_mode            |   Macros
+ * ---------------------|-------------------
+ *     0                | BME280_SLEEP_MODE
+ *     1                | BME280_FORCED_MODE
+ *     3                | BME280_NORMAL_MODE
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_sensor_mode(uint8_t *sensor_mode, struct bme280_dev *dev);
+
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiSystem System
+ * @brief API that performs system-level operations
+ */
+
+/*!
+ * \ingroup bme280ApiSystem
+ * \page bme280_api_bme280_soft_reset bme280_soft_reset
+ * \code
+ * int8_t bme280_soft_reset(struct bme280_dev *dev);
+ * \endcode
+ * @details This API soft-resets the sensor.
+ *
+ * @param[in,out] dev : Structure instance of bme280_dev.
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_soft_reset(struct bme280_dev *dev);
+
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiSensorData Sensor Data
+ * @brief Data processing of sensor
+ */
+
+/*!
+ * \ingroup bme280ApiSensorData
+ * \page bme280_api_bme280_get_sensor_data bme280_get_sensor_data
+ * \code
+ * int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data, struct bme280_dev *dev);
+ * \endcode
+ * @details This API reads the pressure, temperature and humidity data from the
+ * sensor, compensates the data and store it in the bme280_data structure
+ * instance passed by the user.
+ *
+ * @param[in] sensor_comp : Variable which selects which data to be read from
+ * the sensor.
+ *
+ * sensor_comp |   Macros
+ * ------------|-------------------
+ *     1       | BME280_PRESS
+ *     2       | BME280_TEMP
+ *     4       | BME280_HUM
+ *     7       | BME280_ALL
+ *
+ * @param[out] comp_data : Structure instance of bme280_data.
+ * @param[in] dev : Structure instance of bme280_dev.
+ *
+ * @return Result of API execution status
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_get_sensor_data(uint8_t sensor_comp, struct bme280_data *comp_data, struct bme280_dev *dev);
+
+/*!
+ * \ingroup bme280ApiSensorData
+ * \page bme280_api_bme280_parse_sensor_data bme280_parse_sensor_data
+ * \code
+ * void bme280_parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data *uncomp_data);
+ * \endcode
+ *  @details This API is used to parse the pressure, temperature and
+ *  humidity data and store it in the bme280_uncomp_data structure instance.
+ *
+ *  @param[in] reg_data     : Contains register data which needs to be parsed
+ *  @param[out] uncomp_data : Contains the uncompensated pressure, temperature
+ *  and humidity data.
+ *
+ */
+void bme280_parse_sensor_data(const uint8_t *reg_data, struct bme280_uncomp_data *uncomp_data);
+
+/*!
+ * \ingroup bme280ApiSensorData
+ * \page bme280_api_bme280_compensate_data bme280_compensate_data
+ * \code
+ * int8_t bme280_compensate_data(uint8_t sensor_comp,
+ *                             const struct bme280_uncomp_data *uncomp_data,
+ *                             struct bme280_data *comp_data,
+ *                             struct bme280_calib_data *calib_data);
+ * \endcode
+ * @details This API is used to compensate the pressure and/or
+ * temperature and/or humidity data according to the component selected by the
+ * user.
+ *
+ * @param[in] sensor_comp : Used to select pressure and/or temperature and/or
+ * humidity.
+ * @param[in] uncomp_data : Contains the uncompensated pressure, temperature and
+ * humidity data.
+ * @param[out] comp_data : Contains the compensated pressure and/or temperature
+ * and/or humidity data.
+ * @param[in] calib_data : Pointer to the calibration data structure.
+ *
+ * @return Result of API execution status.
+ *
+ * @retval   0 -> Success.
+ * @retval > 0 -> Warning.
+ * @retval < 0 -> Fail.
+ *
+ */
+int8_t bme280_compensate_data(uint8_t sensor_comp,
+                              const struct bme280_uncomp_data *uncomp_data,
+                              struct bme280_data *comp_data,
+                              struct bme280_calib_data *calib_data);
+
+/**
+ * \ingroup bme280
+ * \defgroup bme280ApiSensorDelay Sensor Delay
+ * @brief Generic API for measuring sensor delay
+ */
+
+/*!
+ * \ingroup bme280ApiSensorDelay
+ * \page bme280_api_bme280_cal_meas_delay bme280_cal_meas_delay
+ * \code
+ * uint32_t bme280_cal_meas_delay(const struct bme280_settings *settings);
+ * \endcode
+ * @brief This API is used to calculate the maximum delay in milliseconds required for the
+ * temperature/pressure/humidity(which ever are enabled) measurement to complete.
+ * The delay depends upon the number of sensors enabled and their oversampling configuration.
+ *
+ * @param[in] settings : contains the oversampling configurations.
+ *
+ * @return delay required in milliseconds.
+ *
+ */
+uint32_t bme280_cal_meas_delay(const struct bme280_settings *settings);
+
+#ifdef __cplusplus
 }
-#endif
-#endif // DRIVERS_bme280_H_
+#endif /* End of CPP guard */
+#endif /* BME280_H_ */
+/** @}*/

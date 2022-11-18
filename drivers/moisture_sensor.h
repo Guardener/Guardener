@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include "sl_status.h"
 #include "em_adc.h"
+#include "em_vdac.h"
 #include "em_cmu.h"
 #include "em_ldma.h"
 
@@ -23,6 +24,12 @@ extern "C" {
 
 // @formatter:off
 typedef struct {
+    /* DAC Specific Configurations */
+    VDAC_TypeDef *vdac;                 /** VDAC Register Declaration */
+    VDAC_Init_TypeDef dac_base_init;    /** VDAC initialization structure, common for both channels. */
+    VDAC_InitChannel_TypeDef dac0_init; /** VDAC 0 channel initialization structure. */
+    VDAC_InitChannel_TypeDef dac1_init; /** VDAC 1 channel initialization structure. */
+
     /* ADC Specific Configurations */
     CMU_Clock_TypeDef adc_clk_src;      /**< Peripheral clock to use for ADC */
     CMU_Osc_TypeDef adc_osc_type;       /**< Oscillator type */
@@ -39,7 +46,7 @@ typedef struct {
     CMU_Clock_TypeDef dma_clk_src;      /**< Peripheral clock to use DMA */
     uint8_t dma_channel;                /**< DMA channel */
     LDMA_PeripheralSignal_t dma_trig;   /**< What signal triggers the DMA to start */
-    uint8_t *dest_buff;                /**< Buffer were the ADC samples will be stored */
+    uint8_t *dest_buff;                 /**< Buffer were the ADC samples will be stored */
     uint32_t buff_size;                 /**< Size of the buffer */
 
     /* LETimer Specific Configurations */

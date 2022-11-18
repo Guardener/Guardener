@@ -1,4 +1,4 @@
-/***************************************************************************//**
+/*******************************************************************************
  * @file
  * @brief Core application logic.
  *******************************************************************************
@@ -27,433 +27,302 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
-#include <app.h>
-#include "em_common.h"
-#include "app_assert.h"
+
 #include "sl_bluetooth.h"
-#include "gatt_db.h"
-#include "sl_status.h"
-#include "sl_simple_button_instances.h"
-#include "sl_simple_timer.h"
-#include "app_log.h"
 #include "app_assert.h"
-#ifdef SL_COMPONENT_CATALOG_PRESENT
-#include "sl_component_catalog.h"
-#endif // SL_COMPONENT_CATALOG_PRESENT
-#ifdef SL_CATALOG_CLI_PRESENT
-#include "sl_cli.h"
-#endif // SL_CATALOG_CLI_PRESENT
-#include "sl_sensor_rht.h"
-#include "sl_health_thermometer.h"
-#include <stdbool.h>
-
+#include "gatt_db.h"
+#include "app.h"
+#include "sl_i2cspm_si1145_config.h"
 #include "si1145.h"
-#include "sl_pwm.h"
+#include "sl_i2cspm_bme280_config.h"
+#include "sl_bme280.h"
 #include "moisture_sensor.h"
-#include "bme280.h"
 
-// Connection handle.
-static uint8_t app_connection = 0;
+#ifndef app_log_error
+#define app_log_error(...) do { /* nop */ } while (0)
+#define app_log_debug(...) do { /* nop */ } while (0)
+#define app_log_info(...) do { /* nop */ } while (0)
+#endif
+
+// Macros.
+#define UINT16_TO_BYTES(n) ((uint8_t)(n)), ((uint8_t)((n) >> 8))
+#define UINT16_TO_BYTE0(n) ((uint8_t)(n))
+#define UINT16_TO_BYTE1(n) ((uint8_t)((n) >> 8))
+
+#define SIGNAL_LOSS_AT_1_M_IN_DBM 41 // The Guardener's measured RSSI at 1 m
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
-// Button state.
-static volatile bool app_btn0_pressed = false;
-
-// Periodic timer handle.
-static sl_simple_timer_t app_periodic_timer;
-
-// PWM handle.
-static sl_pwm_instance_t pwm_500k = {0};
-
 // Moisture sensor handle.
 static moisture_sensor_cfg_t ms_cfg = {0};
-volatile uint8_t adcBuffer[8];
+uint8_t adc_buff[8] = {0};
 
-// Periodic timer callback.
-static void app_periodic_timer_cb(sl_simple_timer_t* timer, void* data);
-////////////////////////////////////////////////////////////////////////////////
+/******************************************************************************
+ * Set up a custom advertisement package according to iBeacon specifications.
+ * The advertisement package is 30 bytes long.
+ * See the iBeacon specification for further details.
+ *****************************************************************************/
+static void
+bcn_setup_adv_Guardenering(void);
 
-/**************************************************************************//**
+/******************************************************************************
  * Application Init.
  *****************************************************************************/
 SL_WEAK void app_init(void)
 {
-    sl_status_t sc;
-    app_log_init();
-    app_log_info("App Initialization\r\n");
+    // Init Si1145
+    si1145_cfg_t init = { // @formatter:off
+        .i2cspm = SL_I2CSPM_SI1145_PERIPHERAL, // I2C peripheral initialized already
+        .uv = true,     // enable use of UV
+        .temp = true,   // enable use of temperature
+        .proxy = false, // disable use of proximity sensor
+        .irq = false,   // disable interrupts
+        .forced = true  // disable auto mode, use forced readings
+    };  // @formatter:on
+    sl_status_t sc = si1145_init(init);
+    if(sc != SL_STATUS_OK)
+    {
+        app_log_error("Failed to initialize the Si1145 sensor\r\n");
+        while(true); // crash here
+    }
 
-//    // Init temperature sensor.
-//    sc = sl_sensor_rht_init();
-//    if(sc != SL_STATUS_OK)
-//    {
-//        app_log_warning("Failed to init Si7021 RH/Temp sensor");
-//        app_log_nl();
-//    }
-//
-//    sc = si1145_init(I2C0);
-//    if(sc != SL_STATUS_OK)
-//    {
-//        app_log_error("Failed to initialize the Si1145 sensor\r\n");
-//        while(true); // crash here
-//    }
-//    fflush(stdout);
+    // Init BME280
+    struct bme280_settings init_cfg = { // @formatter:off
+        .osr_p = BME280_OVERSAMPLING_1X,    		/*< pressure oversampling */
+        .osr_t = BME280_OVERSAMPLING_1X,    		/*< temperature oversampling */
+        .osr_h = BME280_NO_OVERSAMPLING,    		/*< humidity oversampling */
+        .filter = BME280_FILTER_COEFF_OFF,  		/*< filter coefficient */
+        .standby_time = BME280_STANDBY_TIME_0_5_MS  /*< standby time */
+    };  // @formatter:on
+    sc = sl_bme280_init(SL_I2CSPM_BME280_PERIPHERAL, init_cfg, BME280_FORCED_MODE);
+    if(sc != SL_STATUS_OK)
+    {
+        app_log_error("Failed to initialize the BME280 sensor\r\n");
+        while(true); // crash here
+    }
 
-    // TODO: Resolve port issues; When PWM enabled, Si1145 fails.
+    // Initialize Moisture Sensor
+    uint32_t buff_sz = 8;
+    moisture_sensor_cfg_t cfg = { // @formatter:off
+        .vdac = VDAC0,                  /** VDAC Register Declaration */
+        .dac_base_init = {
+            .mainCalibration = true,    /** Use main output path calibration values. */
+            .asyncClockMode = true,     /** Clock source for synchronous mode is HFPERCLK */
+            .warmupKeepOn = false,      /** Turn off between sample off conversions.*/
+            .refresh = vdacRefresh64,   /** Refresh every 8th cycle. */
+            .prescaler = 0,             /** No prescaling. */
+            .reference = vdacRefAvdd,   /** AVDD power reference. */
+            .ch0ResetPre = false,       /** Do not reset prescaler on CH 0 start. */
+            .outEnablePRS = true,       /** Enable PRS control of output driver */
+            .sineEnable = true,         /** Enable sine wave generation mode. */
+            .diff = false               /** Single ended mode. */
+        },
+        .dac0_init = {
+            .enable = false,                /** Leave channel disabled when initialization is done. */
+            .prsSel = vdacPrsSelCh0,        /** PRS CH 0 triggers conversion. */
+            .prsAsync = true,               /** Treat PRS channel as a synchronous signal. */
+            .trigMode = vdacTrigModePrs,    /** Select trigger as PRS. */
+            .sampleOffMode = false          /** Channel conversion set to continuous. */
+        },
+        .dac1_init = {
+            .enable = false,                /** Leave channel disabled when initialization is done. */
+            .prsSel = vdacPrsSelCh1,        /** Select PRS channel 1 for DAC channel 1 */
+            .prsAsync = true,               /** Treat PRS channel as a synchronous signal. */
+            .trigMode = vdacTrigModePrs,    /** Select trigger as PRS. */
+            .sampleOffMode = false          /** Channel conversion set to continuous. */
+        },
+        /* ADC Specific Configurations */
+        .adc_clk_src = cmuClock_HFPER,      /**< Peripheral clock to use */
+        .adc_osc_type = cmuOsc_AUXHFRCO,    /**< Oscillator type */
+        .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
+        .adc = ADC0,                        /**< ADC instance */
+        .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
+        .adc_channel = adcPosSelAPORT2XCH9, /**< ADC channel */
+        .ref_volts = adcRef2V5,             // TODO: verify we can do adcRefVDD
+        .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
+        .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
+        .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
 
-//    // Initialize 500kHz PWM signal out of GPIO D10
-//    // @formatter:off
-//    sl_pwm_instance_t fivek_cfg = {
-//            .timer = TIMER0,
-//            .channel = 0,       /**< TIMER channel */
-//            .port = gpioPortD,  /**< GPIO port */
-//            .pin = 10,          /**< GPIO pin */
-//            .location = TIMER_ROUTELOC0_CC0LOC_LOC15 /**< GPIO location */
-//        };
-//        // @formatter:on
-//    pwm_500k = fivek_cfg;
-//    sl_pwm_config_t pwm_cfg = {.frequency = 500000, .polarity = PWM_ACTIVE_HIGH};
-//
-//    sc = sl_pwm_init(&pwm_500k, &pwm_cfg);
-//    if(sc != SL_STATUS_OK)
-//    {
-//        app_log_error("Failed to initialize the Si1145 sensor\n");
-//        while(true); // crash here
-//    }
-//    else
-//    {
-//        sl_pwm_set_duty_cycle(&pwm_500k, 50);
-//        // Start Moisture Sensor Test
-//        sl_pwm_start(&pwm_500k);
-//    }
-//
-//    // Initialize Moisture Sensor
-//    uint32_t buff_sz = 8;
-//    // @formatter:off
-//    moisture_sensor_cfg_t cfg = {
-//            /* ADC Specific Configurations */
-//            .adc_clk_src = cmuClock_HFPER,      /**< Peripheral clock to use */
-//            .adc_osc_type = cmuOsc_AUXHFRCO,    /**< Oscillator type */
-//            .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
-//            .adc = ADC0,                        /**< ADC instance */
-//            .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
-//            .adc_channel = adcPosSelAPORT2XCH9, /**< ADC channel */
-//            .ref_volts = adcRef2V5,             // TODO: verify we can do adcRefVDD
-//            .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
-//            .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
-//            .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
-//
-//            /* DMA Specific Configurations */
-//            .dma_clk_src = cmuClock_LDMA,       /**< Peripheral clock to use DMA */
-//            .dma_channel = 0,                   /**< DMA channel */
-//            .dma_trig = ldmaPeripheralSignal_ADC0_SINGLE, /**< What signal triggers the DMA to start */
-//            .dest_buff = adcBuffer,             /**< Buffer were the ADC samples will be stored */
-//            .buff_size = buff_sz,               /**< Size of the buffer */
-//
-//            /* LETimer Specific Configurations */
-//            .let_osc_type = cmuOsc_LFRCO,       /**< Oscillator type */
-//            .let_clk_src = cmuClock_LFA,        /**< Peripheral clock to use DMA */
-//            .letimer = LETIMER0,                /**< LETimer Peripheral to use */
-//            .delay_ms = 100,                    /**< Time to wait till triggering ADC reading (ms) */
-//    };
-//        // @formatter:on
-//    ms_cfg = cfg;
-//    init_moisture_sensor(&ms_cfg);
+        /* DMA Specific Configurations */
+        .dma_clk_src = cmuClock_LDMA,       /**< Peripheral clock to use DMA */
+        .dma_channel = 0,                   /**< DMA channel */
+        .dma_trig = ldmaPeripheralSignal_ADC0_SINGLE, /**< What signal triggers the DMA to start */
+        .dest_buff = adc_buff,              /**< Buffer were the ADC samples will be stored */
+        .buff_size = buff_sz,               /**< Size of the buffer */
 
-    bme280_init_t init_cfg = {
-        .opt_mode = BEM280_CMD_CTRL_MEAS_MODE_NORMAL,
-        .acqu_intvl = BME280_REG_CONFIG_T_SB_0_5_MS,
-        .temp_samp_rate = BEM280_CMD_CTRL_MEAS_OSRS_T_16X_SAMPLING,
-        .hum_samp_rate = BME280_REG_CTRL_HUM_OSRS_H_16X_SAMPLING,
-        .pres_samp_rate = BEM280_CMD_CTRL_MEAS_OSRS_P_16X_SAMPLING,
-        .filter = BME280_REG_CONFIG_FILTER_OFF
-    };
-    bme280_init(I2C0, init_cfg);
+        /* LETimer Specific Configurations */
+        .let_osc_type = cmuOsc_LFRCO,       /**< Oscillator type */
+        .let_clk_src = cmuClock_LFA,        /**< Peripheral clock to use DMA */
+        .letimer = LETIMER0,                /**< LETimer Peripheral to use */
+        .delay_ms = 100,                    /**< Time to wait till triggering ADC reading (ms) */
+    };  // @formatter:on
+    ms_cfg = cfg;
+    init_moisture_sensor(&ms_cfg);
 }
 
-#ifndef SL_CATALOG_KERNEL_PRESENT
-/**************************************************************************//**
+/******************************************************************************
  * Application Process Action.
  *****************************************************************************/
 SL_WEAK void app_process_action(void)
 {
     // Start Si1145 Test
-//    float lux = 0.0, uvi = 0.0;
-//    if(si1145_get_lux_uvi(I2C0, &lux, &uvi) == SL_STATUS_OK)
-//    {
-//        app_log_info("Acquired Lux and UVI: %f & %f \r\n", lux, uvi);
-//        fflush(stdout);
-//    }
-//    else
-//    {
-//        app_log_error("Failed to acquire lux and uvi readings \r\n");
-//        fflush(stdout);
-//        while(true); // crash here
-//    }
-    // TODO: Fix Lux/UV init/math... values are always the same
+    float lux = 0.0, uvi = 0.0, ir = 0.0;
+    if(si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15) != SL_STATUS_OK)
+    {
+        app_log_error("Failed to acquire lux, uvi, and ir readings \r\n");
+        while(true); // crash here
+    }
 
-//    int idx = 50; // Too lazy right now to add a real wait/delay
-//    do
-//    {
-//        app_log_info("ADC samples current value is: 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X 0x%.2X\r\n", adcBuffer[0],
-//                     adcBuffer[1], adcBuffer[2], adcBuffer[3], adcBuffer[4], adcBuffer[5], adcBuffer[6], adcBuffer[7]);
-//    } while(idx--);
-//    app_log_info("Moisture Sensor Demo Done!\r\n");
-//    fflush(stdout);
+    // Start BME280 Test
+    float temps = 0.0, humid = 0.0;
+    if(sl_bme280_force_get_readings(&temps, NULL, &humid) != SL_STATUS_OK)
+    {
+        app_log_error("Failed to acquire temperature, pressure, and humidity readings \r\n");
+        while(true); // crash here
+    }
 
-    // Samples should happen every .5 ms
-    sl_sleeptimer_delay_millisecond(10);
-    float temps = 0.0, press = 0.0, humid = 0.0;
-    temps = bme280_get_temperature();
-    press = bme280_get_pressure();
-    humid = bme280_get_humidity();
-    app_log_info("temp=%f, press=%f, humid=%f", temps, press, humid);
-    app_log_info("BME280 Test... Success?");
+    lux = 0.0, uvi = 0.0, ir = 0.0, temps = 0.0, humid = 0.0;
+
     return;
 }
-#endif // SL_CATALOG_KERNEL_PRESENT
 
-/**************************************************************************//**
+/******************************************************************************
  * Bluetooth stack event handler.
  * This overrides the dummy weak implementation.
  *
  * @param[in] evt Event coming from the Bluetooth stack.
  *****************************************************************************/
-void sl_bt_on_event(sl_bt_msg_t* evt)
+void sl_bt_on_event(sl_bt_msg_t *evt)
 {
-    sl_status_t sc;
-    bd_addr address;
-    uint8_t address_type;
-    uint8_t system_id[8];
-
-    switch(SL_BT_MSG_ID(evt->header))
-    {
-        // -------------------------------
-        // This event indicates the device has started and the radio is ready.
-        // Do not call any stack command before receiving this boot event!
-        case sl_bt_evt_system_boot_id:
-            // Print boot message.
-            app_log_info("Bluetooth stack booted: v%d.%d.%d-b%d\n", evt->data.evt_system_boot.major,
-                         evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
-                         evt->data.evt_system_boot.build);
-
-            // Extract unique ID from BT Address.
-            sc = sl_bt_system_get_identity_address(&address, &address_type);
-            app_assert_status(sc);
-
-            // Pad and reverse unique ID to get System ID.
-            system_id[0] = address.addr[5];
-            system_id[1] = address.addr[4];
-            system_id[2] = address.addr[3];
-            system_id[3] = 0xFF;
-            system_id[4] = 0xFE;
-            system_id[5] = address.addr[2];
-            system_id[6] = address.addr[1];
-            system_id[7] = address.addr[0];
-
-            sc = sl_bt_gatt_server_write_attribute_value(gattdb_system_id, 0, sizeof(system_id), system_id);
-            app_assert_status(sc);
-
-            app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                         address_type ? "static random" : "public device", address.addr[5], address.addr[4],
-                         address.addr[3], address.addr[2], address.addr[1], address.addr[0]);
-
-            // Create an advertising set.
-            sc = sl_bt_advertiser_create_set(&advertising_set_handle);
-            app_assert_status(sc);
-
-            // Generate data for advertising
-            sc = sl_bt_legacy_advertiser_generate_data(advertising_set_handle, sl_bt_advertiser_general_discoverable);
-            app_assert_status(sc);
-
-            // Set advertising interval to 100ms.
-            sc = sl_bt_advertiser_set_timing(advertising_set_handle, 160, // min. adv. interval (milliseconds * 1.6)
-                                             160, // max. adv. interval (milliseconds * 1.6)
-                                             0,   // adv. duration
-                                             0);  // max. num. adv. events
-            app_assert_status(sc);
-
-            // Start advertising and enable connections.
-            sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
-            app_assert_status(sc);
-            break;
-
-            // -------------------------------
-            // This event indicates that a new connection was opened.
-        case sl_bt_evt_connection_opened_id:
-            app_log_info("Connection opened\n");
-
-#ifdef SL_CATALOG_BLUETOOTH_FEATURE_POWER_CONTROL_PRESENT
-            // Set remote connection power reporting - needed for Power Control
-            sc = sl_bt_connection_set_remote_power_reporting(evt->data.evt_connection_opened.connection,
-                                                             sl_bt_connection_power_reporting_enable);
-            app_assert_status(sc);
-#endif // SL_CATALOG_BLUETOOTH_FEATURE_POWER_CONTROL_PRESENT
-
-            break;
-
-            // -------------------------------
-            // This event indicates that a connection was closed.
-        case sl_bt_evt_connection_closed_id:
-            app_log_info("Connection closed\n");
-
-            // Generate data for advertising
-            sc = sl_bt_legacy_advertiser_generate_data(advertising_set_handle, sl_bt_advertiser_general_discoverable);
-            app_assert_status(sc);
-
-            // Restart advertising after client has disconnected.
-            sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
-            app_assert_status(sc);
-            app_log_info("Started advertising\n");
-            break;
-
-            ///////////////////////////////////////////////////////////////////////////
-            // Add additional event handlers here as your application requires!      //
-            ///////////////////////////////////////////////////////////////////////////
-
-            // -------------------------------
-            // Default event handler.
-        default:
-            break;
-    }
-}
-
-/**************************************************************************//**
- * Callback function of connection close event.
- *
- * @param[in] reason Unused parameter required by the health_thermometer component
- * @param[in] connection Unused parameter required by the health_thermometer component
- *****************************************************************************/
-void sl_bt_connection_closed_cb(uint16_t reason, uint8_t connection)
-{
-    (void)reason;
-    (void)connection;
-    sl_status_t sc;
-
-    // Stop timer.
-    sc = sl_simple_timer_stop(&app_periodic_timer);
+  sl_status_t sc;
+  int16_t ret_power_min, ret_power_max;
+  switch (SL_BT_MSG_ID(evt->header))
+  {
+  // -------------------------------
+  // This event indicates the device has started and the radio is ready.
+  // Do not call any stack command before receiving this boot event!
+  case sl_bt_evt_system_boot_id:
+    // Set 0 dBm maximum Transmit Power.
+    sc = sl_bt_system_set_tx_power(SL_BT_CONFIG_MIN_TX_POWER, 0,
+                                   &ret_power_min, &ret_power_max);
     app_assert_status(sc);
+    (void)ret_power_min;
+    (void)ret_power_max;
+    // Initialize iBeacon ADV data.
+    bcn_setup_adv_Guardenering();
+    break;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Add additional event handlers here as your application requires!      //
+    ///////////////////////////////////////////////////////////////////////////
+
+    // -------------------------------
+    // Default event handler.
+  default:
+    break;
+  }
 }
 
-/**************************************************************************//**
- * Health Thermometer - Temperature Measurement
- * Indication changed callback
- *
- * Called when indication of temperature measurement is enabled/disabled by
- * the client.
- *****************************************************************************/
-void sl_bt_ht_temperature_measurement_indication_changed_cb(uint8_t connection,
-                                                            sl_bt_gatt_client_config_flag_t client_config)
+static void
+bcn_setup_adv_Guardenering(void)
 {
-    sl_status_t sc;
-    app_connection = connection;
-    // Indication or notification enabled.
-    if(sl_bt_gatt_disable != client_config)
-    {
-        // Start timer used for periodic indications.
-        sc = sl_simple_timer_start(&app_periodic_timer,
-        SL_BT_HT_MEASUREMENT_INTERVAL_SEC * 1000,
-                                   app_periodic_timer_cb,
-                                   NULL,
-                                   true);
-        app_assert_status(sc);
-        // Send first indication.
-        app_periodic_timer_cb(&app_periodic_timer, NULL);
-    }
-    // Indications disabled.
-    else
-    {
-        // Stop timer used for periodic indications.
-        (void)sl_simple_timer_stop(&app_periodic_timer);
-    }
+  sl_status_t sc;
+  int16_t support_min;
+  int16_t support_max;
+  int16_t set_min;
+  int16_t set_max;
+  int16_t rf_path_gain;
+  int16_t calculated_power;
+
+  PACKSTRUCT(struct
+             {
+               uint8_t flags_len;    // Length of the Flags field.
+               uint8_t flags_type;   // Type of the Flags field.
+               uint8_t flags;        // Flags field.
+               uint8_t mandata_len;  // Length of the Manufacturer Data field.
+               uint8_t mandata_type; // Type of the Manufacturer Data field.
+               uint8_t comp_id[2];   // Company ID field.
+               uint8_t beac_type[2]; // Beacon Type field.
+               uint8_t uuid[16];     // 128-bit Universally Unique Identifier (UUID). The UUID is an identifier for the company using the Guardener.
+               uint8_t maj_num[2];   // Beacon major number. Used to group related Guardeners.
+               uint8_t min_num[2];   // Beacon minor number. Used to specify individual Guardeners within a group.
+               int8_t tx_power;      // The Beacon's measured RSSI at 1 meter distance in dBm. See the iBeacon specification for measurement guidelines.
+             })
+  bcn_Guardener_adv_data =
+      {
+          // Flag bits - See Bluetooth 4.0 Core Specification , Volume 3, Appendix C, 18.1 for more details on flags.
+          2,           // Length of field.
+          0x01,        // Type of field.
+          0x04 | 0x02, // Flags: LE General Discoverable Mode, BR/EDR is disabled.
+
+          // Manufacturer specific data.
+          26,   // Length of field.
+          0xFF, // Type of field.
+
+          // The first two data octets shall contain a company identifier code from
+          // the Assigned Numbers - Company Identifiers document.
+          // 0x004C = Apple
+          {UINT16_TO_BYTES(0x004C)},
+
+          // Beacon type.
+          // 0x0215 is iBeacon.
+          {UINT16_TO_BYTE1(0x0215), UINT16_TO_BYTE0(0x0215)},
+
+          // 128 bit / 16 byte UUID
+          {0xE2, 0xC5, 0x6D, 0xB5, 0xDF, 0xFB, 0x48, 0xD2, 0xB0, 0x60, 0xD0,
+           0xF5, 0xA7, 0x10, 0x96, 0xE0},
+
+          // Beacon major number.
+          // Set to 34987 and converted to correct format.
+          {UINT16_TO_BYTE1(34987), UINT16_TO_BYTE0(34987)},
+
+          // Beacon minor number.
+          // Set as 1025 and converted to correct format.
+          {UINT16_TO_BYTE1(1025), UINT16_TO_BYTE0(1025)},
+
+          // A dummy value which will be eventually overwritten
+          0};
+
+  // Create an advertising set.
+  sc = sl_bt_advertiser_create_set(&advertising_set_handle);
+  app_assert_status(sc);
+
+  sc = sl_bt_system_get_tx_power_setting(&support_min, &support_max, &set_min,
+                                         &set_max, &rf_path_gain);
+  app_assert_status(sc);
+
+  calculated_power = (set_max > 0) ? (set_max + 5) / 10 : (set_max - 5) / 10;
+  calculated_power = calculated_power - SIGNAL_LOSS_AT_1_M_IN_DBM;
+
+  if (calculated_power > INT8_MAX)
+  {
+    bcn_Guardener_adv_data.tx_power = INT8_MAX;
+  }
+  else if (calculated_power < INT8_MIN)
+  {
+    bcn_Guardener_adv_data.tx_power = INT8_MIN;
+  }
+  else
+  {
+    bcn_Guardener_adv_data.tx_power = calculated_power;
+  }
+
+  // Set custom advertising data.
+  sc = sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0,
+                                        sizeof(bcn_Guardener_adv_data),
+                                        (uint8_t *)(&bcn_Guardener_adv_data));
+  app_assert_status(sc);
+
+  // Set advertising parameters. 100ms advertisement interval.
+  sc = sl_bt_advertiser_set_timing(advertising_set_handle, 160, // min. adv. interval (milliseconds * 1.6)
+                                   160,                         // max. adv. interval (milliseconds * 1.6)
+                                   0,                           // adv. duration
+                                   0);                          // max. num. adv. events
+  app_assert_status(sc);
+
+  // Start advertising in user mode and disable connections.
+  sc = sl_bt_legacy_advertiser_start(advertising_set_handle,
+                                     sl_bt_advertiser_non_connectable);
+  app_assert_status(sc);
 }
-
-/**************************************************************************//**
- * Simple Button
- * Button state changed callback
- * @param[in] handle Button event handle
- *****************************************************************************/
-void sl_button_on_change(const sl_button_t* handle)
-{
-    // Button pressed.
-    if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_PRESSED)
-    {
-        if(&sl_button_btn0 == handle)
-        {
-            app_btn0_pressed = true;
-        }
-    }
-    // Button released.
-    else if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_RELEASED)
-    {
-        if(&sl_button_btn0 == handle)
-        {
-            app_btn0_pressed = false;
-        }
-    }
-}
-
-/**************************************************************************//**
- * Timer callback
- * Called periodically to time periodic temperature measurements and indications.
- *****************************************************************************/
-static void app_periodic_timer_cb(sl_simple_timer_t* timer, void* data)
-{
-    (void)data;
-    (void)timer;
-    sl_status_t sc;
-    int32_t temperature = 0;
-    uint32_t humidity = 0;
-    float tmp_c = 0.0;
-    // float tmp_f = 0.0;
-
-    // Measure temperature; units are % and milli-Celsius.
-    sc = sl_sensor_rht_get(&humidity, &temperature);
-    if(SL_STATUS_NOT_INITIALIZED == sc)
-    {
-        app_log_info("Relative Humidity and Temperature sensor is not initialized.");
-        app_log_nl();
-    }
-    else if(sc != SL_STATUS_OK)
-    {
-        app_log_warning("Invalid RHT reading: %lu %ld\n", humidity, temperature);
-    }
-
-    // button 0 pressed: overwrite temperature with -20C.
-    if(app_btn0_pressed)
-    {
-        temperature = -20 * 1000;
-    }
-
-    tmp_c = (float)temperature / 1000;
-    app_log_info("Temperature: %5.2f C\n", tmp_c);
-    // Send temperature measurement indication to connected client.
-    sc = sl_bt_ht_temperature_measurement_indicate(app_connection, temperature,
-    false);
-    // Conversion to Fahrenheit: F = C * 1.8 + 32
-    // tmp_f = (float)(temperature*18+320000)/10000;
-    // app_log_info("Temperature: %5.2f F\n", tmp_f);
-    // Send temperature measurement indication to connected client.
-    // sc = sl_bt_ht_temperature_measurement_indicate(app_connection,
-    //                                                (temperature*18+320000)/10,
-    //                                                true);
-    if(sc)
-    {
-        app_log_warning("Failed to send temperature measurement indication\n");
-    }
-}
-
-#ifdef SL_CATALOG_CLI_PRESENT
-void hello(sl_cli_command_arg_t* arguments)
-{
-    (void)arguments;
-    bd_addr address;
-    uint8_t address_type;
-    sl_status_t sc = sl_bt_system_get_identity_address(&address, &address_type);
-    app_assert_status(sc);
-    app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                 address_type ? "static random" : "public device", address.addr[5], address.addr[4], address.addr[3],
-                 address.addr[2], address.addr[1], address.addr[0]);
-}
-#endif // SL_CATALOG_CLI_PRESENT
