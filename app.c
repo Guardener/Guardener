@@ -55,17 +55,12 @@
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
-// Moisture sensor handle.
-static moisture_sensor_cfg_t ms_cfg = {0};
-uint8_t adc_buff[8] = {0};
-
 /******************************************************************************
  * Set up a custom advertisement package according to iBeacon specifications.
  * The advertisement package is 30 bytes long.
  * See the iBeacon specification for further details.
  *****************************************************************************/
-static void
-bcn_setup_adv_Guardenering(void);
+static void bcn_setup_adv_Guardenering(void);
 
 /******************************************************************************
  * Application Init.
@@ -103,66 +98,33 @@ SL_WEAK void app_init(void)
         while(true); // crash here
     }
 
-    // PWM initialized by sl_pwm driver via TIMER1's CCO using PF7
-    sl_pwm_set_duty_cycle(&sl_pwm_500k, 50);
-    sl_pwm_start(&sl_pwm_500k);
-
     // Initialize Moisture Sensor
-    uint32_t buff_sz = 8;
-    moisture_sensor_cfg_t cfg = { // @formatter:off
-        .vdac = VDAC0,                  /** VDAC Register Declaration */
-        .dac_base_init = {
-            .mainCalibration = true,    /** Use main output path calibration values. */
-            .asyncClockMode = true,     /** Clock source for synchronous mode is HFPERCLK */
-            .warmupKeepOn = false,      /** Turn off between sample off conversions.*/
-            .refresh = vdacRefresh64,   /** Refresh every 8th cycle. */
-            .prescaler = 0,             /** No prescaling. */
-            .reference = vdacRefAvdd,   /** AVDD power reference. */
-            .ch0ResetPre = false,       /** Do not reset prescaler on CH 0 start. */
-            .outEnablePRS = true,       /** Enable PRS control of output driver */
-            .sineEnable = true,         /** Enable sine wave generation mode. */
-            .diff = false               /** Single ended mode. */
+    moisture_sensor_cfg_t ms_cfg = { // @formatter:off
+        .pwm = sl_pwm_500k,
+        .adc = ADC0,
+        .adc_base_cfg = {
+            .ovsRateSel = adcOvsRateSel2, /** Oversampling rate select. */
+            .warmUpMode = adcWarmupNormal, /** ADC Warm-up mode. */
+            .timebase = ADC_TimebaseCalc(0 /* 0 to use currently defined clock value */),
+            .prescale = ADC_PrescaleCalc(cmuAUXHFRCOFreq_16M0Hz, 0),
+            .tailgate = false, /** Enable/disable conversion tailgating. */
+            .em2ClockConfig = adcEm2Disabled /** ADC EM2 clock configuration */
         },
-        .dac0_init = {
-            .enable = false,                /** Leave channel disabled when initialization is done. */
-            .prsSel = vdacPrsSelCh0,        /** PRS CH 0 triggers conversion. */
-            .prsAsync = true,               /** Treat PRS channel as a synchronous signal. */
-            .trigMode = vdacTrigModePrs,    /** Select trigger as PRS. */
-            .sampleOffMode = false          /** Channel conversion set to continuous. */
-        },
-        .dac1_init = {
-            .enable = false,                /** Leave channel disabled when initialization is done. */
-            .prsSel = vdacPrsSelCh1,        /** Select PRS channel 1 for DAC channel 1 */
-            .prsAsync = true,               /** Treat PRS channel as a synchronous signal. */
-            .trigMode = vdacTrigModePrs,    /** Select trigger as PRS. */
-            .sampleOffMode = false          /** Channel conversion set to continuous. */
-        },
-        /* ADC Specific Configurations */
-        .adc_clk_src = cmuClock_HFPER,      /**< Peripheral clock to use */
-        .adc_osc_type = cmuOsc_AUXHFRCO,    /**< Oscillator type */
-        .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
-        .adc = ADC0,                        /**< ADC instance */
-        .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
-        .adc_channel = adcPosSelAPORT2YCH22, /**< ADC channel PF6 */
-        .ref_volts = adcRefVDD,             // TODO: verify we can do adcRefVDD
-        .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
-        .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
-        .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
-
-        /* DMA Specific Configurations */
-        .dma_clk_src = cmuClock_LDMA,       /**< Peripheral clock to use DMA */
-        .dma_channel = 0,                   /**< DMA channel */
-        .dma_trig = ldmaPeripheralSignal_ADC0_SINGLE, /**< What signal triggers the DMA to start */
-        .dest_buff = adc_buff,              /**< Buffer were the ADC samples will be stored */
-        .buff_size = buff_sz,               /**< Size of the buffer */
-
-        /* LETimer Specific Configurations */
-        .let_osc_type = cmuOsc_LFRCO,       /**< Oscillator type */
-        .let_clk_src = cmuClock_LFA,        /**< Peripheral clock to use DMA */
-        .letimer = LETIMER0,                /**< LETimer Peripheral to use */
-        .delay_ms = 100,                    /**< Time to wait till triggering ADC reading (ms) */
+        .adc_single_cfg = {
+            .prsSel = adcPRSSELCh0, /** PRS trigger selection. Only if prsEnable is enabled. */
+            .acqTime = adcAcqTime4, /** Acquisition time (in ADC clock cycles). */
+            .reference = adcRefVDD, /** Sample reference selection. */
+            .resolution = adcRes12Bit, /** Sample resolution. */
+            .posSel = adcPosSelAPORT1XCH22, /** Positive input for single conversion mode. */
+            .negSel = adcNegSelVSS, /** Negative input for single conversion mode. Grounded for non-differential conversion.  */
+            .diff = false, /** Select if single-ended (false) or differential input (true). */
+            .prsEnable = false, /** Peripheral reflex system trigger enable. */
+            .leftAdjust = false, /** Select if left adjustment should be done. */
+            .rep = false, /** Select if continuous conversion until explicit stop. */
+            .singleDmaEm2Wu = false, /** When true, DMA is available in EM2 for single conversion */
+            .fifoOverwrite = false /** When true, FIFO overwrites old data when full. If false, FIFO discards new data. */
+        }
     };  // @formatter:on
-    ms_cfg = cfg;
     init_moisture_sensor(&ms_cfg);
 }
 
@@ -178,6 +140,7 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to acquire lux, uvi, and ir readings \r\n");
         while(true); // crash here
     }
+    lux = 0.0, uvi = 0.0, ir = 0.0; // debugger stop here to verify
 
     // Start BME280 Test
     float temps = 0.0, humid = 0.0;
@@ -186,15 +149,10 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to acquire temperature, pressure, and humidity readings \r\n");
         while(true); // crash here
     }
+    temps = 0.0, humid = 0.0; // debugger stop here to verify
 
-    lux = 0.0, uvi = 0.0, ir = 0.0, temps = 0.0, humid = 0.0;
-
-    int idx = 50; // Too lazy right now to add a real wait/delay
-    do
-    {
-        app_log_info("ADC samples current value is: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X", adcBuffer[0],
-                     adcBuffer[1], adcBuffer[2], adcBuffer[3], adcBuffer[4], adcBuffer[5], adcBuffer[6], adcBuffer[7]);
-    } while(idx--);
+    uint32_t mvolts = ms_get_millivolts();
+    mvolts = 0; // debugger stop here to verify
 
     return;
 }
