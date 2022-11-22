@@ -11,7 +11,7 @@
                 "-install", "${input:slStudio}",
                 "-nosplash",
                 "-data", "${input:slProjWorkspace}",
-                "'D:\\Education\\UCB\\ECEN 5833\\Project\\Guardener\\.vscode\\BuildExistingProject_v2.py'",
+                "'${workspaceFolder}${pathSeparator}.vscode${pathSeparator}BuildExistingProject_v2.py'",
                 "-application", "com.silabs.ss.platform.scripting.ui.runScript",
                 "${workspaceFolderBasename}",
                 "-cfg", "${input:buildConfiguration}"

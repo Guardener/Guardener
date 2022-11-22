@@ -1,14 +1,23 @@
 {
     "version": 4,
     "env": {
-        "SILABS_PATH": "C:\\SiliconLabs",
-        "SL_STUDIO": "${SILABS_PATH}\\SimplicityStudio\\v5",
-        "SL_CONFIG": "${SL_STUDIO}\\configuration",
-        "SL_JAVA": "${SL_STUDIO}\\features\\com.silabs.external.java.windows.x86_64.feature_11.0.5\\jre\\bin\\java.exe",
-        "SL_EQUINOX": "${SL_STUDIO}\\plugins\\org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar",
-        "SILABS_TOOLS": "${SL_STUDIO}\\developer\\toolchains\\gnu_arm\\10.3_2021.10\\bin",
+        "userHome": "C:${pathSeparator}Users${pathSeparator}Oppa", // windows
+        "sysExt": ".exe", // windows
+        "SILABS_PATH": "C:${pathSeparator}SiliconLabs", // windows
+        "SL_STUDIO": "${SILABS_PATH}${pathSeparator}SimplicityStudio${pathSeparator}v5", // windows
+        "SL_JAVA": "${SL_STUDIO}${pathSeparator}features${pathSeparator}com.silabs.external.java.windows.x86_64.feature_11.0.5${pathSeparator}jre${pathSeparator}bin${pathSeparator}java${sysExt}", // windows
+        
+        // "userHome": "~/", // linux
+        // "sysExt": "", // linux
+        // "SILABS_PATH": "${userHome}${pathSeparator}Downloads${pathSeparator}SimplicityStudio_v5", // linux
+        // "SL_STUDIO": "${SILABS_PATH}", // linux
+        // "SL_CONFIG": "${SL_STUDIO}${pathSeparator}configuration",
+        // "SL_JAVA": "java", // linux
+
+        "SL_EQUINOX": "${SL_STUDIO}${pathSeparator}plugins${pathSeparator}org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar",
+        "SILABS_TOOLS": "${SL_STUDIO}${pathSeparator}developer${pathSeparator}toolchains${pathSeparator}gnu_arm${pathSeparator}10.3_2021.10${pathSeparator}bin",
         "GECKO_SDK_VER": "gecko_sdk_4.1.3",
-        "SL_PROJ_WORKSPACE": "C:\\Users\\Oppa\\SimplicityStudio\\v5_workspace",
+        "SL_PROJ_WORKSPACE": "${userHome}${pathSeparator}SimplicityStudio${pathSeparator}v5_workspace",
         "ProjectIncludes": [
             "${workspaceRoot}/",
             "${workspaceRoot}/drivers/",
