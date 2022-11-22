@@ -1,6 +1,6 @@
 /***************************************************************************//**
  * @file
- * @brief I2C simple poll-based master mode driver instances
+ * @brief PWM Driver Instances
  *******************************************************************************
  * # License
  * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
@@ -14,28 +14,23 @@
  * sections of the MSLA applicable to Source Code.
  *
  ******************************************************************************/
- 
-#ifndef SL_I2CSPM_INSTANCES_H
-#define SL_I2CSPM_INSTANCES_H
+
+#ifndef SL_PWM_INSTANCES_H
+#define SL_PWM_INSTANCES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "sl_i2cspm.h"
+#include "sl_pwm.h"
 
 
-#define SL_I2CSPM_BME280_PRESENT
-#define SL_I2CSPM_SI1145_PRESENT
+extern sl_pwm_instance_t sl_pwm_500k;
 
-
-extern sl_i2cspm_t *sl_i2cspm_bme280;
-extern sl_i2cspm_t *sl_i2cspm_si1145;
-
-void sl_i2cspm_init_instances(void);
+void sl_pwm_init_instances(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // SL_I2CSPM_INSTANCES_H
+#endif // SL_PWM_INSTANCES_H

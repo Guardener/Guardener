@@ -20,5 +20,7 @@ sl_i2cspm_si1145_config.h=1079422262
 sl_memory_config.h=1136720201
 sl_mx25_flash_shutdown_usart_config.h=330822538
 sl_power_manager_config.h=-244691433
+sl_pwm_init_500k_config.h=1018982047
+sl_pwm_init_pwm_500k_config.h=2001244379
 sl_rail_util_pa_config.h=1167873722
 sl_sleeptimer_config.h=-1074849105

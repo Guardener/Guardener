@@ -36,6 +36,7 @@
 #include "si1145.h"
 #include "sl_i2cspm_bme280_config.h"
 #include "sl_bme280.h"
+#include "sl_pwm_instances.h"
 #include "moisture_sensor.h"
 
 #ifndef app_log_error
@@ -102,6 +103,10 @@ SL_WEAK void app_init(void)
         while(true); // crash here
     }
 
+    // PWM initialized by sl_pwm driver via TIMER1's CCO using PF7
+    sl_pwm_set_duty_cycle(&sl_pwm_500k, 50);
+    sl_pwm_start(&sl_pwm_500k);
+
     // Initialize Moisture Sensor
     uint32_t buff_sz = 8;
     moisture_sensor_cfg_t cfg = { // @formatter:off
@@ -138,8 +143,8 @@ SL_WEAK void app_init(void)
         .tgt_freq = cmuAUXHFRCOFreq_4M0Hz,  /**< Target frequency of ADC */
         .adc = ADC0,                        /**< ADC instance */
         .em_mode = adcEm2ClockOnDemand,     /**< Enable or disable EM2 ability */
-        .adc_channel = adcPosSelAPORT2XCH9, /**< ADC channel */
-        .ref_volts = adcRef2V5,             // TODO: verify we can do adcRefVDD
+        .adc_channel = adcPosSelAPORT2YCH22, /**< ADC channel PF6 */
+        .ref_volts = adcRefVDD,             // TODO: verify we can do adcRefVDD
         .acq_time = adcAcqTime4,            /**< Acquisition time (in ADC clock cycles) */
         .prs_chan = adcPRSSELCh0,           /**< PRS Channel to use */
         .captures_per_sample = 2,           /**< Select single channel Data Valid level. SINGLE IRQ is set when (DVL+1) number of single channels have been converted and their results are available in the Single FIFO. */
@@ -183,6 +188,13 @@ SL_WEAK void app_process_action(void)
     }
 
     lux = 0.0, uvi = 0.0, ir = 0.0, temps = 0.0, humid = 0.0;
+
+    int idx = 50; // Too lazy right now to add a real wait/delay
+    do
+    {
+        app_log_info("ADC samples current value is: 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X", adcBuffer[0],
+                     adcBuffer[1], adcBuffer[2], adcBuffer[3], adcBuffer[4], adcBuffer[5], adcBuffer[6], adcBuffer[7]);
+    } while(idx--);
 
     return;
 }

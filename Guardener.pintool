@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ASCII"?>
-<device:XMLDevice xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:device="http://www.silabs.com/ss/hwconfig/document/device.ecore" name="pin_tool.EFR32BG13P632F512GM48" partId="mcu.arm.efr32.bg13.efr32bg13p632f512gm48" contextId="com.silabs.sdk.stack.super:4.1.3._1540690485">
+<device:XMLDevice xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:device="http://www.silabs.com/ss/hwconfig/document/device.ecore" name="pin_tool.EFR32BG13P632F512GM48" partId="mcu.arm.efr32.bg13.efr32bg13p632f512gm48" contextId="com.silabs.sdk.stack.super:4.1.3._-2118153916">
   <mode name="DefaultMode">
     <property object="DBG" propertyId="ABModule.selectedRequirement" value="dbg%T%SL_DEBUG%T%sl_debug_swo_config.h"/>
     <property object="DBG" propertyId="ABPeripheral.included" value="true"/>
@@ -14,7 +14,7 @@
     <property object="PA4" propertyId="pin.reserve" value="Reserved"/>
     <property object="PA5" propertyId="ABModule.selectedRequirement" value="gpio%T%SL_BOARD_ENABLE_VCOM%T%sl_board_control_config.h"/>
     <property object="PA5" propertyId="pin.reserve" value="Reserved"/>
-    <property object="PD15" propertyId="ABModule.selectedRequirement" value="gpio%T%SL_BOARD_ENABLE_DISPLAY%T%sl_board_control_config.h"/>
+    <property object="PD15" propertyId="ABModule.selectedRequirement" value="gpio%T%SL_BOARD_ENABLE_SENSOR_RHT%T%sl_board_control_config.h"/>
     <property object="PD15" propertyId="pin.reserve" value="Reserved"/>
     <property object="PORTIO" propertyId="portio.dbg.enable.swv" value="Enabled"/>
     <property object="PORTIO" propertyId="portio.i2c0.enable.scl" value="Enabled"/>
@@ -24,6 +24,14 @@
     <property object="PORTIO" propertyId="portio.i2c1.enable.scl" value="Enabled"/>
     <property object="PORTIO" propertyId="portio.i2c1.enable.sda" value="Enabled"/>
     <property object="PORTIO" propertyId="portio.i2c1.location.sda" value="20"/>
+    <property object="PORTIO" propertyId="portio.timer0.location.cc0" value="30"/>
+    <property object="PORTIO" propertyId="portio.timer1.enable.cc0" value="Enabled"/>
+    <property object="PORTIO" propertyId="portio.timer1.location.cc0" value="31"/>
+    <property object="TIMER0" propertyId="ABPeripheral.included" value="true"/>
+    <property object="TIMER0" propertyId="channel.0.name" value=""/>
+    <property object="TIMER1" propertyId="ABModule.selectedRequirement" value="timer%T%SL_PWM_500K%T%sl_pwm_init_500k_config.h"/>
+    <property object="TIMER1" propertyId="ABPeripheral.included" value="true"/>
+    <property object="TIMER1" propertyId="channel.0.name" value=""/>
   </mode>
   <modeTransition>
     <property object="RESET &#x2192; DefaultMode" propertyId="modeTransition.source" value="RESET"/>

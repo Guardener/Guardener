@@ -133,6 +133,14 @@
             <file name="sl_i2cspm.h" linked="false" uri="studio:/sdk/platform/driver/i2cspm/inc/sl_i2cspm.h"/>
           </folder>
         </folder>
+        <folder name="pwm">
+          <folder name="src">
+            <file name="sl_pwm.c" linked="false" uri="studio:/sdk/platform/driver/pwm/src/sl_pwm.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="sl_pwm.h" linked="false" uri="studio:/sdk/platform/driver/pwm/inc/sl_pwm.h"/>
+          </folder>
+        </folder>
       </folder>
       <folder name="service">
         <folder name="device_init">
@@ -220,6 +228,7 @@
           <file name="em_prs.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_prs.c"/>
           <file name="em_rtcc.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_rtcc.c"/>
           <file name="em_system.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_system.c"/>
+          <file name="em_timer.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_timer.c"/>
           <file name="em_usart.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_usart.c"/>
           <file name="em_vdac.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_vdac.c"/>
         </folder>
@@ -246,6 +255,7 @@
           <file name="em_prs.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_prs.h"/>
           <file name="em_rtcc.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_rtcc.h"/>
           <file name="em_system.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_system.h"/>
+          <file name="em_timer.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_timer.h"/>
           <file name="em_usart.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_usart.h"/>
           <file name="em_vdac.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_vdac.h"/>
         </folder>
@@ -626,6 +636,7 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/power_manager/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc/public"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/pwm/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/common"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/protocol/ble"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/protocol/ieee802154"/>

@@ -114,6 +114,11 @@
 // [TIMER0]$
 
 // $[TIMER1]
+// TIMER1 CC0 on PF7
+#define TIMER1_CC0_PORT                          gpioPortF
+#define TIMER1_CC0_PIN                           7
+#define TIMER1_CC0_LOC                           31
+
 // [TIMER1]$
 
 // $[USART0]
