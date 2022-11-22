@@ -38,6 +38,7 @@
 #include "sl_bme280.h"
 #include "sl_pwm_instances.h"
 #include "moisture_sensor.h"
+#include "sl_button.h"
 
 #ifndef app_log_error
 #define app_log_error(...) do { /* nop */ } while (0)
@@ -129,6 +130,16 @@ SL_WEAK void app_init(void)
 }
 
 /******************************************************************************
+ * Overrides sl_button's IRQ callback (which is empty) with ours
+ *****************************************************************************/
+static bool interrupt_triggered = false;
+void sl_button_on_change(const sl_button_t *handle)
+{
+    (void)handle; // the button pressed
+    interrupt_triggered = true;
+}
+
+/******************************************************************************
  * Application Process Action.
  *****************************************************************************/
 SL_WEAK void app_process_action(void)
@@ -152,7 +163,18 @@ SL_WEAK void app_process_action(void)
     temps = 0.0, humid = 0.0; // debugger stop here to verify
 
     uint32_t mvolts = ms_get_millivolts();
+    if(mvolts == (uint32_t)-1)
+    {
+        app_log_error("Failed to acquire moisture sensor value \r\n");
+        while(true); // crash here
+    }
     mvolts = 0; // debugger stop here to verify
+
+    if (interrupt_triggered)
+    {
+        interrupt_triggered = false; // debugger stop here to verify
+        app_log_info("User Interface Button has been pressed %lu times", pressed_count);
+    }
 
     return;
 }

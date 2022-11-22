@@ -6,6 +6,7 @@
     </folder>
     <file name="sl_memory_config.h" generated="true" linked="false"/>
     <file name="sl_mx25_flash_shutdown_usart_config.h" generated="true" linked="false"/>
+    <file name="sl_simple_button_usr_btn_config.h" generated="true" linked="false"/>
     <file name="psa_crypto_config.h" generated="true" linked="false"/>
     <file name="sl_device_init_dcdc_config.h" generated="true" linked="false"/>
     <file name="sl_bluetooth_config.h" generated="true" linked="false"/>
@@ -14,11 +15,11 @@
     <file name="sl_debug_swo_config.h" generated="true" linked="false"/>
     <file name="sl_i2cspm_bme280_config.h" generated="true" linked="false"/>
     <file name="sl_i2cspm_si1145_config.h" generated="true" linked="false"/>
+    <file name="sl_simple_button_config.h" generated="true" linked="false"/>
     <file name="app_assert_config.h" generated="true" linked="false"/>
     <file name="sl_sleeptimer_config.h" generated="true" linked="false"/>
     <file name="sl_power_manager_config.h" generated="true" linked="false"/>
     <file name="sl_device_init_lfxo_config.h" generated="true" linked="false"/>
-    <file name="sl_pwm_init_500k_config.h" generated="true" linked="false"/>
     <file name="app_properties_config.h" generated="true" linked="false"/>
     <file name="sl_bluetooth_advertiser_config.h" generated="true" linked="false"/>
     <file name="sl_device_init_emu_config.h" generated="true" linked="false"/>

@@ -104,19 +104,17 @@
           <file name="btl_reset_info.h" linked="false" uri="studio:/sdk/platform/bootloader/api/btl_reset_info.h"/>
         </folder>
       </folder>
-      <folder name="CMSIS">
-        <folder name="Core">
-          <folder name="Include">
-            <file name="cmsis_compiler.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_compiler.h"/>
-            <file name="cmsis_version.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_version.h"/>
-            <file name="tz_context.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/tz_context.h"/>
-            <file name="cmsis_gcc.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_gcc.h"/>
-            <file name="core_cm4.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/core_cm4.h"/>
-            <file name="mpu_armv7.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/mpu_armv7.h"/>
+      <folder name="driver">
+        <folder name="button">
+          <folder name="src">
+            <file name="sl_button.c" linked="false" uri="studio:/sdk/platform/driver/button/src/sl_button.c"/>
+            <file name="sl_simple_button.c" linked="false" uri="studio:/sdk/platform/driver/button/src/sl_simple_button.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="sl_button.h" linked="false" uri="studio:/sdk/platform/driver/button/inc/sl_button.h"/>
+            <file name="sl_simple_button.h" linked="false" uri="studio:/sdk/platform/driver/button/inc/sl_simple_button.h"/>
           </folder>
         </folder>
-      </folder>
-      <folder name="driver">
         <folder name="debug">
           <folder name="src">
             <file name="sl_debug_swo.c" linked="false" uri="studio:/sdk/platform/driver/debug/src/sl_debug_swo.c"/>
@@ -133,12 +131,16 @@
             <file name="sl_i2cspm.h" linked="false" uri="studio:/sdk/platform/driver/i2cspm/inc/sl_i2cspm.h"/>
           </folder>
         </folder>
-        <folder name="pwm">
-          <folder name="src">
-            <file name="sl_pwm.c" linked="false" uri="studio:/sdk/platform/driver/pwm/src/sl_pwm.c"/>
-          </folder>
-          <folder name="inc">
-            <file name="sl_pwm.h" linked="false" uri="studio:/sdk/platform/driver/pwm/inc/sl_pwm.h"/>
+      </folder>
+      <folder name="CMSIS">
+        <folder name="Core">
+          <folder name="Include">
+            <file name="cmsis_compiler.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_compiler.h"/>
+            <file name="cmsis_version.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_version.h"/>
+            <file name="tz_context.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/tz_context.h"/>
+            <file name="cmsis_gcc.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_gcc.h"/>
+            <file name="core_cm4.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/core_cm4.h"/>
+            <file name="mpu_armv7.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/mpu_armv7.h"/>
           </folder>
         </folder>
       </folder>
@@ -213,6 +215,21 @@
           </folder>
         </folder>
       </folder>
+      <folder name="emdrv">
+        <folder name="common">
+          <folder name="inc">
+            <file name="ecode.h" linked="false" uri="studio:/sdk/platform/emdrv/common/inc/ecode.h"/>
+          </folder>
+        </folder>
+        <folder name="gpiointerrupt">
+          <folder name="src">
+            <file name="gpiointerrupt.c" linked="false" uri="studio:/sdk/platform/emdrv/gpiointerrupt/src/gpiointerrupt.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="gpiointerrupt.h" linked="false" uri="studio:/sdk/platform/emdrv/gpiointerrupt/inc/gpiointerrupt.h"/>
+          </folder>
+        </folder>
+      </folder>
       <folder name="emlib">
         <folder name="src">
           <file name="em_adc.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_adc.c"/>
@@ -225,10 +242,10 @@
           <file name="em_ldma.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_ldma.c"/>
           <file name="em_letimer.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_letimer.c"/>
           <file name="em_msc.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_msc.c"/>
+          <file name="em_opamp.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_opamp.c"/>
           <file name="em_prs.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_prs.c"/>
           <file name="em_rtcc.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_rtcc.c"/>
           <file name="em_system.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_system.c"/>
-          <file name="em_timer.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_timer.c"/>
           <file name="em_usart.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_usart.c"/>
           <file name="em_vdac.c" linked="false" uri="studio:/sdk/platform/emlib/src/em_vdac.c"/>
         </folder>
@@ -252,10 +269,10 @@
           <file name="em_letimer.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_letimer.h"/>
           <file name="em_msc.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_msc.h"/>
           <file name="em_msc_compat.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_msc_compat.h"/>
+          <file name="em_opamp.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_opamp.h"/>
           <file name="em_prs.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_prs.h"/>
           <file name="em_rtcc.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_rtcc.h"/>
           <file name="em_system.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_system.h"/>
-          <file name="em_timer.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_timer.h"/>
           <file name="em_usart.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_usart.h"/>
           <file name="em_vdac.h" linked="false" uri="studio:/sdk/platform/emlib/inc/em_vdac.h"/>
         </folder>
@@ -621,11 +638,14 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/board/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/bootloader"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/bootloader/api"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/button/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/CMSIS/Core/Include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/driver/configuration_over_swo/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/debug/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/device_init/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emdrv/common/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emlib/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emdrv/gpiointerrupt/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/i2cspm/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/mbedtls/include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/mbedtls/library"/>
@@ -636,7 +656,6 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/power_manager/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc/public"/>
-  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/pwm/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/common"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/protocol/ble"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/protocol/ieee802154"/>

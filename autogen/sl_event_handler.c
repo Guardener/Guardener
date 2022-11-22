@@ -14,10 +14,11 @@
 #include "sl_sleeptimer.h"
 #include "sl_bluetooth.h"
 #include "sl_debug_swo.h"
+#include "gpiointerrupt.h"
 #include "sl_i2cspm_instances.h"
 #include "sl_mbedtls.h"
 #include "sl_mpu.h"
-#include "sl_pwm_instances.h"
+#include "sl_simple_button_instances.h"
 #include "sl_power_manager.h"
 #include "sl_cos.h"
 
@@ -39,8 +40,9 @@ void sl_platform_init(void)
 void sl_driver_init(void)
 {
   sl_debug_swo_init();
+  GPIOINT_Init();
   sl_i2cspm_init_instances();
-  sl_pwm_init_instances();
+  sl_simple_button_init_instances();
   sl_cos_send_config();
 }
 

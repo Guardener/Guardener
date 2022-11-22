@@ -23,4 +23,6 @@ sl_power_manager_config.h=-244691433
 sl_pwm_init_500k_config.h=1018982047
 sl_pwm_init_pwm_500k_config.h=2001244379
 sl_rail_util_pa_config.h=1167873722
+sl_simple_button_config.h=1569967607
+sl_simple_button_usr_btn_config.h=-1442788207
 sl_sleeptimer_config.h=-1074849105

@@ -27,22 +27,23 @@ sdk: {id: gecko_sdk, version: 4.1.3}
 toolchain_settings: []
 component:
 - {id: emlib_ldma}
+- instance: [usr_btn]
+  id: simple_button
 - {id: bluetooth_feature_gatt_server}
+- {id: emlib_opamp}
 - {id: bluetooth_feature_sm}
-- {id: bluetooth_feature_legacy_advertiser}
 - {id: mpu}
+- {id: bluetooth_feature_legacy_advertiser}
 - {id: gatt_configuration}
 - {id: emlib_vdac}
-- instance: [500k]
-  id: pwm
 - {id: bluetooth_stack}
 - {id: emlib_adc}
 - {id: EFR32BG13P632F512GM48}
 - {id: bluetooth_feature_connection}
 - {id: bluetooth_feature_system}
+- {id: emlib_letimer}
 - instance: [bme280, si1145]
   id: i2cspm
-- {id: emlib_letimer}
 - {id: bootloader_interface}
 - {id: app_assert}
 - {id: brd4104a}
