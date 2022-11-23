@@ -173,7 +173,7 @@ SL_WEAK void app_process_action(void)
     if (interrupt_triggered)
     {
         interrupt_triggered = false; // debugger stop here to verify
-        app_log_info("User Interface Button has been pressed %lu times", pressed_count);
+        app_log_info("User Interface Button has been pressed \r\n");
     }
 
     return;
