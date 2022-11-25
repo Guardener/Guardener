@@ -1,0 +1,89 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Simplicity Studio Build",
+            "type": "shell",
+            "command": "${input:slJava}",
+            "args": [
+                "-jar", "${input:slEquinox}",
+                "-configuration", "${input:slConfig}",
+                "-install", "${input:slStudio}",
+                "-nosplash",
+                "-data", "${input:slProjWorkspace}",
+                "'${workspaceFolder}${pathSeparator}.vscode${pathSeparator}BuildExistingProject_v2.py'",
+                "-application", "com.silabs.ss.platform.scripting.ui.runScript",
+                "${workspaceFolderBasename}",
+                "-cfg", "${input:buildConfiguration}"
+            ]
+        }
+    ],
+    "inputs": [
+        // {
+        //     "id": "GenCompileCmds",
+        //     "type": "command",
+        //     "command": "workbench.action.tasks.runTask",
+        //     "args": "Generate Compile Commands"
+        // },
+        {
+            "id": "projWorkspace",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_PROJ_WORKSPACE"
+        },
+        {
+            "id": "buildConfiguration",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "BUILD_CONFIGURATION"
+        },
+        {
+            "id": "slJava",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_JAVA"
+        },
+        {
+            "id": "slEquinox",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_EQUINOX"
+        },
+        {
+            "id": "slConfig",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_CONFIG"
+        },
+        {
+            "id": "slStudio",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_STUDIO"
+        },
+        {
+            "id": "slProjWorkspace",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SL_PROJ_WORKSPACE"
+        },
+        {
+            "id": "silabsPath",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SILABS_PATH"
+        },
+        {
+            "id": "silabsTools",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "SILABS_TOOLS"
+        },
+        {
+            "id": "geckoSdkVer",
+            "type": "command",
+            "command": "cpptools.activeConfigCustomVariable",
+            "args": "GECKO_SDK_VER"
+        },
+    ]
+}

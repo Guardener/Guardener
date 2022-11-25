@@ -25,25 +25,35 @@
 // [ETM]$
 
 // $[PTI]
-// PTI DFRAME on PB13
-#define PTI_DFRAME_PORT                          gpioPortB
-#define PTI_DFRAME_PIN                           13
-#define PTI_DFRAME_LOC                           6
-
-// PTI DOUT on PB12
-#define PTI_DOUT_PORT                            gpioPortB
-#define PTI_DOUT_PIN                             12
-#define PTI_DOUT_LOC                             6
-
 // [PTI]$
 
 // $[GPIO]
 // [GPIO]$
 
 // $[I2C0]
+// I2C0 SCL on PA0
+#define I2C0_SCL_PORT                            gpioPortA
+#define I2C0_SCL_PIN                             0
+#define I2C0_SCL_LOC                             31
+
+// I2C0 SDA on PA1
+#define I2C0_SDA_PORT                            gpioPortA
+#define I2C0_SDA_PIN                             1
+#define I2C0_SDA_LOC                             1
+
 // [I2C0]$
 
 // $[I2C1]
+// I2C1 SCL on PC10
+#define I2C1_SCL_PORT                            gpioPortC
+#define I2C1_SCL_PIN                             10
+#define I2C1_SCL_LOC                             18
+
+// I2C1 SDA on PC11
+#define I2C1_SDA_PORT                            gpioPortC
+#define I2C1_SDA_PIN                             11
+#define I2C1_SDA_LOC                             20
+
 // [I2C1]$
 
 // $[LESENSE]
@@ -104,6 +114,11 @@
 // [TIMER0]$
 
 // $[TIMER1]
+// TIMER1 CC0 on PF7
+#define TIMER1_CC0_PORT                          gpioPortF
+#define TIMER1_CC0_PIN                           7
+#define TIMER1_CC0_LOC                           31
+
 // [TIMER1]$
 
 // $[USART0]

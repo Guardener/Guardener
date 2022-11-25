@@ -15,10 +15,7 @@
 
 #include "sl_i2cspm.h"
 #include "sl_status.h"
-
-#if ENABLE_PROXIMITY == 1
-#define INIT_PROX
-#endif
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -258,6 +255,12 @@ extern "C" {
 #define SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW   (0x8D)  /**< 0b 1000 1101; Indicates infrared ambient light channel conversion overflow. */
 #define SI1145_ERRRSP_AUX_ADC_OVERFLOW      (0x8E)  /**< 0b 1000 1110; Indicates auxiliary channel conversion overflow. */
 
+typedef struct {
+  sl_i2cspm_t* i2cspm;
+  bool uv, temp, proxy, irq, forced;
+  bool high_vis_range, high_ir_range;
+} si1145_cfg_t;
+
 /**
  * @brief   Initializes the Si1145 Light Sensor
  * @param[in] i2cspm
@@ -265,7 +268,7 @@ extern "C" {
  *
  * @return SL_STATUS_OK on Success; SL_STATUS_INITIALIZATION on Failure
  */
-sl_status_t si1145_init(sl_i2cspm_t* i2cspm);
+sl_status_t si1145_init(si1145_cfg_t cfg);
 
 /***************************************************************************//**
  * @brief
@@ -278,7 +281,7 @@ sl_status_t si1145_init(sl_i2cspm_t* i2cspm);
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t si1145_deinit(sl_i2cspm_t* i2cspm);
+sl_status_t si1145_deinit();
 
 /***************************************************************************//**
  * @brief
@@ -287,16 +290,26 @@ sl_status_t si1145_deinit(sl_i2cspm_t* i2cspm);
  * @param[in] i2cspm
  *   The I2C peripheral to use.
  *
- * @param[out] lux
- *    The measured ambient light illuminance in lux
+ * @param[out] _lux
+ *    The measured ambient light in LUX; Provide null pointer to skip this reading.
  *
- * @param[out] uvi
- *    The measured UV index
+ * @param[out] _uvi
+ *    The measured UV index; Provide null pointer to skip this reading.
+ *
+ * @param[out] _ir
+ *    The measured infrared; Provide null pointer to skip this reading.
+ *
+ * @param[in] iter
+ *    The amount of iterative readings to take; Takes longer but more accurate.
+ * 
+ * @note
+ *    Without parameter _ir, _lux will return a raw value instead of the
+ *      calculated LUX value as IR reading is required.
  *
  * @retval SL_STATUS_OK Success
  * @retval SL_STATUS_TRANSMIT I2C transmit failure
  ******************************************************************************/
-sl_status_t si1145_measure_lux_uvi(sl_i2cspm_t* i2cspm, float* lux, float* uvi);
+sl_status_t si1145_get_lux_uvi_ir(float *_lux, float *_uvi, float *_ir, int iter);
 
 /***************************************************************************//**
  * @brief

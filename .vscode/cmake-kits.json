@@ -1,0 +1,9 @@
+[
+    {
+        "name": "GNU ARM v10.3.1 - Default",
+        "compilers": {
+            "C": "${env:HOME}/../../SiliconLabs/SimplicityStudio/v5/developer/toolchains/gnu_arm/10.3_2021.10/bin/arm-none-eabi-gcc",
+            "CXX": "${env:HOME}/../../SiliconLabs/SimplicityStudio/v5/developer/toolchains/gnu_arm/10.3_2021.10/bin/arm-none-eabi-g++"
+        }
+    }
+]

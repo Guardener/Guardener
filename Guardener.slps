@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <model:MDescriptors xmlns:model="http://www.silabs.com/ss/Studio.ecore">
   <descriptors name="Guardener">
-    <properties key="projectCommon.sdkId" value="com.silabs.sdk.stack.super:4.1.1._-2118153916"/>
+    <properties key="projectCommon.sdkId" value="com.silabs.sdk.stack.super:4.1.3._1540690485"/>
     <properties key="universalConfig.generationDirectory" value=""/>
     <properties key="universalConfig.toolchainCompatibility" value="iar gcc"/>
     <properties key="projectCommon.boardIds" value="brd4104a:0.0.0.A00 brd4001a:0.0.0.A01"/>
@@ -11,4 +11,4 @@
     <properties key="universalConfig.projectTypeIds" value="com.silabs.ss.framework.ide.project.core.cdtMbsProjectType"/>
     <properties key="projectCommon.importModeId" value="COPY"/>
   </descriptors>
-</model:MDescriptors>
+</model:MDescriptors>

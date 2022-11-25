@@ -1,91 +1,39 @@
-# Guardener Firmware - A BLE Beacon
+# SoC - iBeacon
 
-> Note: this expects a specific Gecko Bootloader to be present on the device. For details see the Troubleshooting section.
+An iBeacon device is an implementation that sends non-connectable advertisements in iBeacon format. The iBeacon Service gives Bluetooth accessories a simple and convenient way to send iBeacon to smartphones. This example can be tested together with the EFR Connect mobile app.
 
-## Explaination of code
-
-### Si1145  
-I2C0 is used to communicate with the Si1145 light sensor.  
-This is EXT_HEADER pins 15 & 16 for I2C_SCL & I2C_SDA respectively.
-The Si1145 has a startup sequence necessary to use it. Drivers have been created for it which reside in the `drivers` directory.
-
-### Moisture Sensor  
-The moisture sensor uses TIMER, ADC, PRS, and LDMA peripherals in EM1/EM2 to take a single-ended measurement.  
-A 500kHz signal is generated through an RC circuit which is conditioned down to a steady state analog DC voltage which can be correlated to an equivalent percent of moisture detected.  
-The 16-bit TIMER peripheral is used to generate the 500kHz signal while staying in the lowest energy mode possible. Our target is EM3, although it's likely we'll have to use EM2.  
-Measurements are requested through the use of the TIMER via the PRS in order to stay in the loweset energy state as possible.  
-ADC captures are handled by the LDMA and provided to the rest of the code for use.  
-Initial configuration used (will be adjusted later):  
- * CLK 		- 19 MHz HFPER 
- * ADC      - 16 MHz, 12-bit res, 2.5V internal ref
- * TIMER  	- 500 kHz
- * LETIMER	- 100ms delay to trigger PRS
- * PRS      - PRS0 triggers ADC to acquire a single sample  
- * LDMA     - LDMA0 performs ADC0->SINGLEDATA to adcBuffer
-
-TIMER0 is configured to toggle the GPIO PD10 which is connected to EXT_HEADER pin 7.  
-ADC0 is configured to sample PC9 which is connected to EXT_HEADER pin 10.  
-
-
-Below is the old getting started information which came with the initial code base.  
-
----
+> Note: this example expects a specific Gecko Bootloader to be present on your device. For details see the Troubleshooting section.
 
 ## Getting Started
 
-To learn the Bluetooth technology basics, see [UG103.14: Bluetooth LE Fundamentals](https://www.silabs.com/documents/public/user-guides/ug103-14-fundamentals-ble.pdf).
+Introduced in iOS 7, iBeacon enables new location awareness possibilities for apps. Leveraging Bluetooth Low Energy (BLE), a device with iBeacon technology can be used to establish a region around an object. This allows an iOS device to determine when it has entered or left the region, along with an estimation of proximity to a Guardener.
+
+For more Guardener information, see [Apple iBeacon](https://developer.apple.com/iGuardener/)
 
 To get started with Silicon Labs Bluetooth and Simplicity Studio, see [QSG169: Bluetooth SDK v3.x Quick Start Guide](https://www.silabs.com/documents/public/quick-start-guides/qsg169-bluetooth-sdk-v3x-quick-start-guide.pdf).
 
-The term SoC stands for "System on Chip", meaning that this is a standalone application that runs on the EFR32/BGM and does not require any external MCU or other active components to operate.
+To run this example, you will need:
 
-As the name implies, the example is an (almost) empty template that has only the bare minimum to make a working Bluetooth application. This skeleton can be extended with the application logic.
+- Any Bluetooth Low Energy-compatible [radio board](https://www.silabs.com/wireless/bluetooth),
+- A smartphone with [EFR Connect app](https://www.silabs.com/developers/efr-connect-mobile-app) installed. (Note: On Android, the distance will not be calculated.)
 
-The development of a Bluetooth applications consist of three main steps:
+The following picture shows the system view of how it works.
 
-* Designing the GATT database
-* Responding to the events raised by the Bluetooth stack
-* Implementing additional application logic
+![SoC-iBeacon-Overview](readme_img1.png)
 
-These steps are covered in the following sections. To learn more about programming an SoC application, see [UG434: Silicon Labs Bluetooth ® C Application Developer's Guide for SDK v3.x](https://www.silabs.com/documents/public/user-guides/ug434-bluetooth-c-soc-dev-guide-sdk-v3x.pdf).
+Follow these steps to set up the project:
 
-## Designing the GATT Database
+1. Create the SoC-iBeacon project based on your hardware, then build and flash the image to your board. Alternatively, you could flash the pre-built demo image.
 
-The SOC-empty example implements a basic GATT database. GATT definitions (services/characteristics) can be extended using the GATT Configurator, which can be found under Advanced Configurators in the Software Components tab of the Project Configurator. To open the Project Configurator, open the .slcp file of the project.
+   ![create-project](readme_img2.png)
 
-![Opening GATT Configurator](readme_img1.png)
+2. Open the *EFR Connect* app on your smartphone and allow the permission requested the first time it is opened.
 
-To learn how to use the GATT Configurator, see [UG438: GATT Configurator User’s Guide for Bluetooth SDK v3.x](https://www.silabs.com/documents/public/user-guides/ug438-gatt-configurator-users-guide-sdk-v3x.pdf).
+3. Click [Develop] -> [Browser]. You will see a list of nearby devices that are sending Bluetooth advertisement. Find the one named "iBeacon" .
 
-## Responding to Bluetooth Events
+   ![create-project](readme_img3.png)
 
-A Bluetooth application is event driven. The Bluetooth stack generates events e.g., when a remote device connects or disconnects or when it writes a characteristic in the local GATT database. The application has to handle these events in the `sl_bt_on_event()` function. The prototype of this function is implemented in *app.c*. To handle more events, the switch-case statement of this function is to be extended. For the list of Bluetooth events, see the online [Bluetooth API Reference](https://docs.silabs.com/bluetooth/latest/).
-
-## Implementing Application Logic
-
-Additional application logic has to be implemented in the `app_init()` and `app_process_action()` functions. Find the definitions of these functions in *app.c*. The `app_init()` function is called once when the device is booted, and `app_process_action()` is called repeatedly in a while(1) loop. For example, you can poll peripherals in this function. To save energy and to have this function called at specific intervals only, for example once every second, use the services of the [Sleeptimer](https://docs.silabs.com/gecko-platform/latest/service/api/group-sleeptimer). If you need a more sophisticated application, consider using RTOS (see [AN1260: Integrating v3.x Silicon Labs Bluetooth Applications with Real-Time Operating Systems](https://www.silabs.com/documents/public/application-notes/an1260-integrating-v3x-bluetooth-applications-with-rtos.pdf)).
-
-## Features Already Added to the SOC-Empty Application
-
-The SOC-Empty application is ***almost*** empty. It implements a basic application to demonstrate how to handle events, how to use the GATT database, and how to add software components.
-
-* A simple application is implemented in the event handler function that starts advertising on boot (and on connection_closed event). This makes it possible for remote devices to find the device and connect to it.
-* A simple GATT database is defined by adding Generic Access and Device Information services. This makes it possible for remote devices to read out some basic information such as the device name.
-* The OTA DFU software component is added, which extends both the event handlers (see *sl_ota_dfu.c*) and the GATT database (see *ota_dfu.xml*). This makes it possible to make Over-The-Air Device-Firmware-Upgrade without any additional application code.
-
-## Testing the SOC-Empty Application
-
-As described above, an empty example does nothing except advertising and letting other devices connect and read its basic GATT database. To test this feature, do the following:
-
-1. Build and flash the SoC-Empty example to your device.
-2. Make sure a bootloader is installed. See the Troubleshooting section.
-3. Download the **EFR Connect** smartphone app, available on [iOS](https://apps.apple.com/us/app/efr-connect/id1030932759) and [Android](https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo).
-4. Open the app and choose the Bluetooth Browser.
-   ![EFR Connect start screen](readme_img2.png)
-5. Now you should find your device advertising as "Empty Example". Tap **Connect**.
-   ![Bluetooth Browser](readme_img3.png)
-6. The connection is opened, and the GATT database is automatically discovered. Find the device name characteristic under Generic Access service and try to read out the device name.
-   ![GATT database of the device](readme_img4.png)
+   You can also see the Minor, Major, and UUID number, and the EFR app will estimate the distance. (Note: On Android, the distance will not be calculated.)
 
 ## Troubleshooting
 
@@ -135,6 +83,8 @@ Before programming the radio board mounted on the mainboard, make sure the power
 [UG434: Silicon Labs Bluetooth ® C Application Developer's Guide for SDK v3.x](https://www.silabs.com/documents/public/user-guides/ug434-bluetooth-c-soc-dev-guide-sdk-v3x.pdf)
 
 [Bluetooth Training](https://www.silabs.com/support/training/bluetooth)
+
+[Getting-Started-with-iBeacon](https://developer.apple.com/iGuardener/Getting-Started-with-iBeacon.pdf)
 
 ## Report Bugs & Get Support
 
