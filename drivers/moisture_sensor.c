@@ -48,7 +48,7 @@ static ADC_TypeDef *adc_instance = 0;
 static volatile uint32_t sample;
 static volatile uint32_t millivolts;
 static float scaling_factor;
-static uint32_t scaling_diff;
+//static uint32_t scaling_diff;
 const float MAX_VAL = 100.0;
 
 
@@ -206,7 +206,7 @@ moisture_cal_state_t next_cal_state(moisture_cal_state_t cal_state){
   return ret;
 }
 
-float normalize_moisture(uint32_t max_val, uint32_t dry, uint32_t wet){
+float normalize_moisture(float max_val, uint32_t dry, uint32_t wet){
     uint32_t scaling_diff;
     float ret = 0;
   // 

@@ -350,6 +350,15 @@ SL_WEAK void app_process_action(void)
         }
     }
 
+//    // Total packet received should be:
+//    // 0x 02 01 06 05 AA BA BE 0B 08 15 AA BB CC DD EE FF AA FF 01 45 01 23
+//
+//    // Update the custom advertising packet
+//    if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
+//    {
+//        app_log_error("Failed to set advertising data");
+//    }
+
     return;
 }
 #endif
