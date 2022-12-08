@@ -19,6 +19,7 @@
 #include "em_ldma.h"
 #include "em_letimer.h"
 #include "sl_pwm.h"
+#include "sl_pwm_instances.h"
 #include "sl_sleeptimer.h"
 
 #ifdef app_log_debug
@@ -117,6 +118,7 @@ sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
 
     // PWM initialized by sl_pwm driver via TIMER1's CCO using PF7
     pwm_instance = cfg->pwm;
+    sl_pwm_init_instances();
     sl_pwm_set_duty_cycle(&pwm_instance, 50);
 
     // Initialize the ADC if viable peripheral is given

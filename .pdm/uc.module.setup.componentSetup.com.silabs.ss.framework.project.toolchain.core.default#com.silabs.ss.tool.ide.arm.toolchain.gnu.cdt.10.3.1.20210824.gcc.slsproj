@@ -71,11 +71,13 @@
           <file name="sl_enum.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_enum.h"/>
           <file name="sl_assert.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_assert.h"/>
           <file name="sl_common.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_common.h"/>
+          <file name="sl_string.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_string.h"/>
           <file name="sl_slist.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_slist.h"/>
           <file name="sl_status.h" linked="false" uri="studio:/sdk/platform/common/inc/sl_status.h"/>
         </folder>
         <folder name="src">
           <file name="sl_assert.c" linked="false" uri="studio:/sdk/platform/common/src/sl_assert.c"/>
+          <file name="sl_string.c" linked="false" uri="studio:/sdk/platform/common/src/sl_string.c"/>
           <file name="sl_slist.c" linked="false" uri="studio:/sdk/platform/common/src/sl_slist.c"/>
         </folder>
         <folder name="toolchain">
@@ -132,19 +134,28 @@
           </folder>
         </folder>
       </folder>
-      <folder name="CMSIS">
-        <folder name="Core">
-          <folder name="Include">
-            <file name="cmsis_compiler.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_compiler.h"/>
-            <file name="cmsis_version.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_version.h"/>
-            <file name="tz_context.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/tz_context.h"/>
-            <file name="cmsis_gcc.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_gcc.h"/>
-            <file name="core_cm4.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/core_cm4.h"/>
-            <file name="mpu_armv7.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/mpu_armv7.h"/>
+      <folder name="service">
+        <folder name="cli">
+          <folder name="inc">
+            <file name="sl_cli.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli.h"/>
+            <file name="sl_cli_types.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli_types.h"/>
+            <file name="sl_cli_command.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli_command.h"/>
+            <file name="sl_cli_input.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli_input.h"/>
+            <file name="sl_cli_tokenize.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli_tokenize.h"/>
+            <file name="sl_cli_arguments.h" linked="false" uri="studio:/sdk/platform/service/cli/inc/sl_cli_arguments.h"/>
+          </folder>
+          <folder name="src">
+            <file name="sl_cli_input.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli_input.c"/>
+            <file name="sl_cli_tokenize.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli_tokenize.c"/>
+            <file name="sl_cli_command.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli_command.c"/>
+            <file name="sl_cli.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli.c"/>
+            <file name="sl_cli_io.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli_io.c"/>
+            <file name="sl_cli_arguments.c" linked="false" uri="studio:/sdk/platform/service/cli/src/sl_cli_arguments.c"/>
+            <file name="sli_cli_arguments.h" linked="false" uri="studio:/sdk/platform/service/cli/src/sli_cli_arguments.h"/>
+            <file name="sli_cli_input.h" linked="false" uri="studio:/sdk/platform/service/cli/src/sli_cli_input.h"/>
+            <file name="sli_cli_io.h" linked="false" uri="studio:/sdk/platform/service/cli/src/sli_cli_io.h"/>
           </folder>
         </folder>
-      </folder>
-      <folder name="service">
         <folder name="device_init">
           <folder name="inc">
             <file name="sl_device_init_clocks.h" linked="false" uri="studio:/sdk/platform/service/device_init/inc/sl_device_init_clocks.h"/>
@@ -160,6 +171,22 @@
             <file name="sl_device_init_hfxo_s1.c" linked="false" uri="studio:/sdk/platform/service/device_init/src/sl_device_init_hfxo_s1.c"/>
             <file name="sl_device_init_lfxo_s1.c" linked="false" uri="studio:/sdk/platform/service/device_init/src/sl_device_init_lfxo_s1.c"/>
             <file name="sl_device_init_nvic.c" linked="false" uri="studio:/sdk/platform/service/device_init/src/sl_device_init_nvic.c"/>
+          </folder>
+        </folder>
+        <folder name="iostream">
+          <folder name="src">
+            <file name="sl_iostream.c" linked="false" uri="studio:/sdk/platform/service/iostream/src/sl_iostream.c"/>
+            <file name="sl_iostream_retarget_stdio.c" linked="false" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_retarget_stdio.c"/>
+            <file name="sl_iostream_stdlib_config.c" linked="false" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_stdlib_config.c"/>
+            <file name="sl_iostream_uart.c" linked="false" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_uart.c"/>
+            <file name="sl_iostream_usart.c" linked="false" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_usart.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="sl_iostream.h" linked="false" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream.h"/>
+            <file name="sl_iostream_stdlib_config.h" linked="false" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_stdlib_config.h"/>
+            <file name="sl_iostream_uart.h" linked="false" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_uart.h"/>
+            <file name="sli_iostream_uart.h" linked="false" uri="studio:/sdk/platform/service/iostream/inc/sli_iostream_uart.h"/>
+            <file name="sl_iostream_usart.h" linked="false" uri="studio:/sdk/platform/service/iostream/inc/sl_iostream_usart.h"/>
           </folder>
         </folder>
         <folder name="mpu">
@@ -212,6 +239,18 @@
           </folder>
           <folder name="inc">
             <file name="sl_udelay.h" linked="false" uri="studio:/sdk/platform/service/udelay/inc/sl_udelay.h"/>
+          </folder>
+        </folder>
+      </folder>
+      <folder name="CMSIS">
+        <folder name="Core">
+          <folder name="Include">
+            <file name="cmsis_compiler.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_compiler.h"/>
+            <file name="cmsis_version.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_version.h"/>
+            <file name="tz_context.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/tz_context.h"/>
+            <file name="cmsis_gcc.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/cmsis_gcc.h"/>
+            <file name="core_cm4.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/core_cm4.h"/>
+            <file name="mpu_armv7.h" linked="false" uri="studio:/sdk/platform/CMSIS/Core/Include/mpu_armv7.h"/>
           </folder>
         </folder>
       </folder>
@@ -320,6 +359,10 @@
               <file name="pa_curve_types_efr32.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_curve_types_efr32.h"/>
               <file name="pa_curves_efr32.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/pa-conversions/pa_curves_efr32.h"/>
             </folder>
+            <folder name="rail_util_pti">
+              <file name="sl_rail_util_pti.c" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.c"/>
+              <file name="sl_rail_util_pti.h" linked="false" uri="studio:/sdk/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.h"/>
+            </folder>
           </folder>
         </folder>
       </folder>
@@ -331,12 +374,51 @@
             <file name="app_assert.h" linked="false" uri="studio:/sdk/app/common/util/app_assert/app_assert.h"/>
             <file name="sl_app_assert.h" linked="false" uri="studio:/sdk/app/common/util/app_assert/sl_app_assert.h"/>
           </folder>
+          <folder name="app_log">
+            <file name="app_log.c" linked="false" uri="studio:/sdk/app/common/util/app_log/app_log.c"/>
+            <file name="app_log.h" linked="false" uri="studio:/sdk/app/common/util/app_log/app_log.h"/>
+            <file name="sl_app_log.h" linked="false" uri="studio:/sdk/app/common/util/app_log/sl_app_log.h"/>
+          </folder>
+        </folder>
+      </folder>
+      <folder name="bluetooth">
+        <folder name="common">
+          <folder name="health_thermometer">
+            <file name="sl_health_thermometer.c" linked="false" uri="studio:/sdk/app/bluetooth/common/health_thermometer/sl_health_thermometer.c"/>
+            <file name="sl_health_thermometer.h" linked="false" uri="studio:/sdk/app/bluetooth/common/health_thermometer/sl_health_thermometer.h"/>
+          </folder>
+          <folder name="in_place_ota_dfu">
+            <file name="sl_bt_in_place_ota_dfu.c" linked="false" uri="studio:/sdk/app/bluetooth/common/in_place_ota_dfu/sl_bt_in_place_ota_dfu.c"/>
+            <file name="sl_bt_in_place_ota_dfu.h" linked="false" uri="studio:/sdk/app/bluetooth/common/in_place_ota_dfu/sl_bt_in_place_ota_dfu.h"/>
+          </folder>
+          <folder name="sensor_rht">
+            <file name="sl_sensor_rht.c" linked="false" uri="studio:/sdk/app/bluetooth/common/sensor_rht/sl_sensor_rht.c"/>
+            <file name="sl_sensor_rht.h" linked="false" uri="studio:/sdk/app/bluetooth/common/sensor_rht/sl_sensor_rht.h"/>
+          </folder>
+          <folder name="sensor_select">
+            <file name="sl_sensor_select.c" linked="false" uri="studio:/sdk/app/bluetooth/common/sensor_select/sl_sensor_select.c"/>
+            <file name="sl_sensor_select.h" linked="false" uri="studio:/sdk/app/bluetooth/common/sensor_select/sl_sensor_select.h"/>
+          </folder>
+          <folder name="simple_timer">
+            <file name="sl_simple_timer.c" linked="false" uri="studio:/sdk/app/bluetooth/common/simple_timer/sl_simple_timer.c"/>
+            <file name="sl_simple_timer.h" linked="false" uri="studio:/sdk/app/bluetooth/common/simple_timer/sl_simple_timer.h"/>
+          </folder>
         </folder>
       </folder>
     </folder>
     <folder name="protocol">
       <folder name="bluetooth">
+        <folder name="lib">
+          <folder name="EFR32BG13P">
+            <folder name="GCC">
+              <file name="binapploader.o" linked="false" uri="studio:/sdk/protocol/bluetooth/lib/EFR32BG13P/GCC/binapploader.o"/>
+              <file name="libbluetooth.a" linked="false" uri="studio:/sdk/protocol/bluetooth/lib/EFR32BG13P/GCC/libbluetooth.a"/>
+              <file name="libpsstore.a" linked="false" uri="studio:/sdk/protocol/bluetooth/lib/EFR32BG13P/GCC/libpsstore.a"/>
+            </folder>
+          </folder>
+        </folder>
         <folder name="src">
+          <file name="sl_apploader_util_s1.c" linked="false" uri="studio:/sdk/protocol/bluetooth/src/sl_apploader_util_s1.c"/>
           <file name="sli_bt_advertiser_config.c" linked="false" uri="studio:/sdk/protocol/bluetooth/src/sli_bt_advertiser_config.c"/>
           <file name="sli_bt_connection_config.c" linked="false" uri="studio:/sdk/protocol/bluetooth/src/sli_bt_connection_config.c"/>
           <file name="sli_bt_dynamic_gattdb_config.c" linked="false" uri="studio:/sdk/protocol/bluetooth/src/sli_bt_dynamic_gattdb_config.c"/>
@@ -350,6 +432,7 @@
           <file name="sl_bt_mbedtls_context.c" linked="false" uri="studio:/sdk/protocol/bluetooth/src/sl_bt_mbedtls_context.c"/>
         </folder>
         <folder name="inc">
+          <file name="sl_apploader_util.h" linked="false" uri="studio:/sdk/protocol/bluetooth/inc/sl_apploader_util.h"/>
           <file name="sli_bt_config_defs.h" linked="false" uri="studio:/sdk/protocol/bluetooth/inc/sli_bt_config_defs.h"/>
           <file name="sli_bt_advertiser_config.h" linked="false" uri="studio:/sdk/protocol/bluetooth/inc/sli_bt_advertiser_config.h"/>
           <file name="sli_bt_connection_config.h" linked="false" uri="studio:/sdk/protocol/bluetooth/inc/sli_bt_connection_config.h"/>
@@ -373,14 +456,6 @@
         </folder>
         <folder name="api">
           <file name="sl_bt.xapi" linked="false" uri="studio:/sdk/protocol/bluetooth/api/sl_bt.xapi"/>
-        </folder>
-        <folder name="lib">
-          <folder name="EFR32BG13P">
-            <folder name="GCC">
-              <file name="libbluetooth.a" linked="false" uri="studio:/sdk/protocol/bluetooth/lib/EFR32BG13P/GCC/libbluetooth.a"/>
-              <file name="libpsstore.a" linked="false" uri="studio:/sdk/protocol/bluetooth/lib/EFR32BG13P/GCC/libpsstore.a"/>
-            </folder>
-          </folder>
         </folder>
       </folder>
     </folder>
@@ -414,6 +489,14 @@
             <folder name="sl_mx25_flash_shutdown_usart">
               <file name="sl_mx25_flash_shutdown.h" linked="false" uri="studio:/sdk/hardware/driver/mx25_flash_shutdown/inc/sl_mx25_flash_shutdown_usart/sl_mx25_flash_shutdown.h"/>
             </folder>
+          </folder>
+        </folder>
+        <folder name="si70xx">
+          <folder name="src">
+            <file name="sl_si70xx.c" linked="false" uri="studio:/sdk/hardware/driver/si70xx/src/sl_si70xx.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="sl_si70xx.h" linked="false" uri="studio:/sdk/hardware/driver/si70xx/inc/sl_si70xx.h"/>
           </folder>
         </folder>
       </folder>
@@ -609,6 +692,16 @@
             </folder>
           </folder>
         </folder>
+        <folder name="printf">
+          <folder name="src">
+            <file name="iostream_printf.c" linked="false" uri="studio:/sdk/util/third_party/printf/src/iostream_printf.c"/>
+          </folder>
+          <folder name="inc">
+            <file name="iostream_printf.h" linked="false" uri="studio:/sdk/util/third_party/printf/inc/iostream_printf.h"/>
+          </folder>
+          <file name="printf.c" linked="false" uri="studio:/sdk/util/third_party/printf/printf.c"/>
+          <file name="printf.h" linked="false" uri="studio:/sdk/util/third_party/printf/printf.h"/>
+        </folder>
       </folder>
       <folder name="silicon_labs">
         <folder name="silabs_core">
@@ -629,16 +722,24 @@
   <file name="readme_img1.png" linked="false" uri="studio:/project/readme_img1.png"/>
   <file name="readme_img2.png" linked="false" uri="studio:/project/readme_img2.png"/>
   <file name="readme_img3.png" linked="false" uri="studio:/project/readme_img3.png"/>
+  <file name="readme_img4.png" linked="false" uri="studio:/project/readme_img4.png"/>
+  <file name="readme_img5.png" linked="false" uri="studio:/project/readme_img5.png"/>
+  <file name="readme_img6.png" linked="false" uri="studio:/project/readme_img6.png"/>
+  <file name="readme_img7.png" linked="false" uri="studio:/project/readme_img7.png"/>
+  <file name="readme_img8.png" linked="false" uri="studio:/project/readme_img8.png"/>
   <file name="readme.md" linked="false" uri="studio:/project/readme.md"/>
   <includePath uri="studio:/project/"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/Device/SiliconLabs/EFR32BG13P/Include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/app/common/util/app_assert"/>
-  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/common/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/common/util/app_log"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/protocol/bluetooth/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/common/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/board/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/bootloader"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/bootloader/api"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/button/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/cli/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/cli/src"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/CMSIS/Core/Include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/driver/configuration_over_swo/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/debug/inc"/>
@@ -646,7 +747,10 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emdrv/common/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emlib/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/emdrv/gpiointerrupt/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/bluetooth/common/health_thermometer"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/driver/i2cspm/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/bluetooth/common/in_place_ota_dfu"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/iostream/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/mbedtls/include"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/mbedtls/library"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_mbedtls_support/config"/>
@@ -654,6 +758,8 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/mpu/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/driver/mx25_flash_shutdown/inc/sl_mx25_flash_shutdown_usart"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/power_manager/inc"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/printf"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/printf/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/third_party/crypto/sl_component/sl_psa_driver/inc/public"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/common"/>
@@ -663,7 +769,12 @@
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/chip/efr32/efr32xg1x"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/plugin/pa-conversions"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/plugin/pa-conversions/efr32xg1x"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/plugin/rail_util_pti"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/bluetooth/common/sensor_rht"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/bluetooth/common/sensor_select"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/hardware/driver/si70xx/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/util/silicon_labs/silabs_core/memory_manager"/>
+  <includePath uri="studio:/project/gecko_sdk_4.1.3/app/bluetooth/common/simple_timer"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/common/toolchain/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/system/inc"/>
   <includePath uri="studio:/project/gecko_sdk_4.1.3/platform/service/sleeptimer/inc"/>
@@ -681,6 +792,7 @@
   <macroDefinition name="MBEDTLS_PSA_CRYPTO_CONFIG_FILE" value="&lt;psa_crypto_config.h>"/>
   <macroDefinition name="SL_RAIL_LIB_MULTIPROTOCOL_SUPPORT" value="0"/>
   <macroDefinition name="SL_RAIL_UTIL_PA_CONFIG_HEADER" value="&lt;sl_rail_util_pa_config.h>"/>
+  <libraryFile uri="studio:/project/gecko_sdk_4.1.3/protocol/bluetooth/lib/EFR32BG13P/GCC/binapploader.o"/>
   <libraryFile uri="studio:/project/gecko_sdk_4.1.3/protocol/bluetooth/lib/EFR32BG13P/GCC/libbluetooth.a"/>
   <libraryFile uri="studio:/project/gecko_sdk_4.1.3/protocol/bluetooth/lib/EFR32BG13P/GCC/libpsstore.a"/>
   <libraryFile uri="studio:/project/gecko_sdk_4.1.3/platform/radio/rail_lib/autogen/librail_release/librail_efr32xg13_gcc_release.a"/>
@@ -758,12 +870,20 @@
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.map" value="true"/>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.map" value="true"/>
   <toolOption toolId="studio.ide.project" optionId="device_opn" value="efr32bg13p632f512gm48"/>
-  <toolOption toolId="makefile.arm.gcc.linker" optionId="misc">
-    <toolListOption value="-Wl,--gc-sections"/>
-  </toolOption>
   <toolOption toolId="makefile.arm.gcc.compiler" optionId="misc">
+    <toolListOption value="-fno-builtin-printf"/>
+    <toolListOption value="-fno-builtin-sprintf"/>
     <toolListOption value="--specs=nano.specs"/>
     <toolListOption value="-g"/>
+  </toolOption>
+  <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.base" optionId="com.silabs.gnu.c.compiler.option.misc.otherlist">
+    <toolListOption value="-fno-builtin-printf"/>
+    <toolListOption value="-fno-builtin-sprintf"/>
+    <toolListOption value="-c"/>
+    <toolListOption value="-fmessage-length=0"/>
+  </toolOption>
+  <toolOption toolId="makefile.arm.gcc.linker" optionId="misc">
+    <toolListOption value="-Wl,--gc-sections"/>
   </toolOption>
   <toolOption toolId="makefile.arm.gcc.assembler" optionId="misc">
     <toolListOption value="-x assembler-with-cpp"/>
@@ -771,10 +891,6 @@
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.circulardependency" value="true"/>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.base" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.nostdlibs" value="false"/>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker" optionId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.linker.circulardependency" value="true"/>
-  <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.base" optionId="com.silabs.gnu.c.compiler.option.misc.otherlist">
-    <toolListOption value="-c"/>
-    <toolListOption value="-fmessage-length=0"/>
-  </toolOption>
   <toolOption toolId="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.cpp.compiler.base" optionId="com.silabs.gnu.cpp.compiler.option.misc.otherlist">
     <toolListOption value="-c"/>
     <toolListOption value="-fmessage-length=0"/>

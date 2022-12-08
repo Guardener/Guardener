@@ -34,7 +34,7 @@
 // <gpioModeInputPull=> GPIO Input Pull
 // <gpioModeInputPullFilter=> GPIO Input Pull Filter
 // <i> Default: gpioModeInput
-#define SL_SIMPLE_BUTTON_GPIO_MODE        gpioModeInputPull
+#define SL_SIMPLE_BUTTON_GPIO_MODE        gpioModeInputPullFilter
 
 // <q SL_SIMPLE_BUTTON_GPIO_DOUT>
 // <i> SL_SIMPLE_BUTTON_GPIO_MODE == gpioModeInput, Filter if DOUT is set
