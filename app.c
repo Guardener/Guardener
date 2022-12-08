@@ -211,6 +211,12 @@ SL_WEAK void app_init(void)
  *****************************************************************************/
 SL_WEAK void app_process_action(void)
 {
+    if (advertising_set_handle == 0xff)
+    {
+        // BT Stack not yet initialized, skip until it's ready
+        return;
+    }
+
     // Start Si1145 Test
     guardener_float_t lux, uvi, ir;
     if(si1145_get_lux_uvi_ir(&lux.f, &uvi.f, &ir.f, 15) != SL_STATUS_OK)
