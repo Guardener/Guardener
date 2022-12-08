@@ -33,6 +33,7 @@
 #include "sl_simple_button_instances.h"
 #include "sl_simple_timer.h"
 #include "app_log.h"
+#include "em_rtcc.h"
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "gatt_db.h"
@@ -68,12 +69,16 @@
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
+#define SHORT_PRESS 2000
+#define LONG_PRESS 20000
+
 // The advertisement data structure
 #define BLE_ADV_PACKET_LENGTH   31 // total bytes in a BLE Advertisement Packet
 #define BLE_REQ_PACKET_ELEMENTS 7 // num of bytes required for BT packet structure
 #define CUSTOM_ADV_AVAIL_LENGTH (BLE_ADV_PACKET_LENGTH - BLE_REQ_PACKET_ELEMENTS) // remaining about for us to use
 #define CUSTOM_ADV_ELEMENTS     11 // 3 bytes for lux, 2 for uvi, 2 for ir, 1 for temp, 1 for RH, 2 for millivolts
 #define NAME_MAX_LENGTH (CUSTOM_ADV_AVAIL_LENGTH - (CUSTOM_ADV_ELEMENTS + 2 /*bytes for name length + type */))
+
 typedef struct {
     // BLE advertisement packet structure
     uint8_t len_flags;
@@ -108,6 +113,8 @@ typedef struct {
     // These values are NOT included in the actual advertising payload, just for bookkeeping
     char dummy;        // Space for null terminator
     uint8_t data_size; // Actual length of advertising data
+
+
 } guardener_adv_data_t;
 
 // Helper union to make it easier to convert to BLE packets
@@ -122,11 +129,18 @@ typedef union {
 
 static guardener_adv_data_t guardener_adv_data = {0};
 
+moisture_cal_state_t cal_state = CAL_START;
+extern volatile uint32_t millivolts_when_dry;
+extern volatile uint32_t millivolts_when_wet;
+
 // Button state.
 static volatile bool usr_btn_pressed = false, interrupt_triggered = false;
 
 // Periodic timer handle.
 static sl_simple_timer_t app_periodic_timer;
+
+uint32_t pressed_time;
+uint32_t released_time;
 
 /**************************************************************************//**
  * Application Init.
@@ -192,6 +206,7 @@ SL_WEAK void app_init(void)
             .rep = false, /** Select if continuous conversion until explicit stop. */
             .singleDmaEm2Wu = false, /** When true, DMA is available in EM2 for single conversion */
             .fifoOverwrite = false /** When true, FIFO overwrites old data when full. If false, FIFO discards new data. */
+
         }
     };   // @formatter:on
     init_moisture_sensor(&ms_cfg);
@@ -218,7 +233,7 @@ SL_WEAK void app_process_action(void)
     }
     else
     {
-        app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux.f, uvi.f, ir.f);
+        //app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux.f, uvi.f, ir.f);
     }
 
     /* Packet Construction Test */
@@ -287,6 +302,7 @@ SL_WEAK void app_process_action(void)
     }
     else
     {
+        // if calibrated, can be % instead of mV
         app_log_info("mvolts=%lu mV", mvolts);
     }
     
@@ -299,16 +315,39 @@ SL_WEAK void app_process_action(void)
     if (interrupt_triggered)
     {
         interrupt_triggered = false; // debugger stop here to verify
-        app_log_info("User Interface Button has been pressed \r\n");
-    }
+        if(usr_btn_pressed == true)
+        {
+            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
+        }
+        else if(usr_btn_pressed == false)
+        {
+          app_log_info("User Interface Button has been released");
+          if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
+          {
+            app_log_info("                                        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n", released_time -  pressed_time, released_time, pressed_time);
+          }
+          else if(released_time - pressed_time >= LONG_PRESS )
+          {
+            // Let's have the procedure be this for now:
+            // Long press 1, go from start to dry
+            // Long press again to go to wet, set up and then press again, the
+            // cal procedure will call the function to normalize
+            
+            cal_state = next_cal_state(cal_state);
 
-    // Total packet received should be:
-    // 0x 02 01 06 05 AA BA BE 0B 08 15 AA BB CC DD EE FF AA FF 01 45 01 23
+            //else if(cfg->moisture_cal_state == CAL_NOT_OK)
+            //  next_cal_state(&ms_cfg);
 
-    // Update the custom advertising packet
-    if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
-    {
-        app_log_error("Failed to set advertising data");
+            app_log_info("calibration state is at %u", cal_state);
+            app_log_info("                                        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n", released_time -  pressed_time, released_time, pressed_time);
+          }
+
+          //app_log_info("User Interface Button has been released, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
+
+          //%d.%d-b%d\n", evt->data.evt_system_boot.major,
+          //        evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
+          //        evt->data.evt_system_boot.build);
+        }
     }
 
     return;
@@ -432,6 +471,13 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             break;
 
+        case sl_bt_evt_system_awake_id:
+            // get all readings
+            // prepare packet
+            // send packet here or?
+            app_log_info("Oh hi I'm awake now\n");
+            break;
+
             // -------------------------------
             // This event indicates that a connection was closed.
         case sl_bt_evt_connection_closed_id:
@@ -485,19 +531,22 @@ void sl_button_on_change(const sl_button_t* handle)
     interrupt_triggered = true; // for debugging
 
     // Button pressed.
-    if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_PRESSED)
+    if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_PRESSED && usr_btn_pressed == false)
     {
         if(&sl_button_usr_btn == handle)
         {
             usr_btn_pressed = true;
+            pressed_time = RTCC_CounterGet();
+            released_time = 0;
         }
     }
-    // Button released.
-    else if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_RELEASED)
+    // Button released. Requires a button to have been recorded-as-pressed
+    else if(sl_button_get_state(handle) == SL_SIMPLE_BUTTON_RELEASED && usr_btn_pressed == true)
     {
         if(&sl_button_usr_btn == handle)
         {
             usr_btn_pressed = false;
+            released_time = RTCC_CounterGet();
         }
     }
 }
