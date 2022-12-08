@@ -130,11 +130,11 @@ typedef union {
 static guardener_adv_data_t guardener_adv_data = {0};
 
 moisture_cal_state_t cal_state = CAL_START;
-extern volatile uint32_t millivolts_when_dry;
-extern volatile uint32_t millivolts_when_wet;
+//extern volatile uint32_t millivolts_when_dry;
+//extern volatile uint32_t millivolts_when_wet;
 
 // Button state.
-static volatile bool usr_btn_pressed = false, interrupt_triggered = false;
+static volatile bool usr_btn_pressed = false, interrupt_triggered = false, calibrating = false;
 
 // Periodic timer handle.
 static sl_simple_timer_t app_periodic_timer;
@@ -224,6 +224,12 @@ SL_WEAK void app_process_action(void)
         return;
     }
 
+//    //* I2C TxRx needs to be above EM2 to Tx
+//    SLEEP_SleepBlockBegin(sleepEM2);
+
+//    //* Re-enable deeper sleeping states
+//    SLEEP_SleepBlockEnd(sleepEM2);
+
     // Start Si1145 Test
     guardener_float_t lux, uvi, ir;
     if(si1145_get_lux_uvi_ir(&lux.f, &uvi.f, &ir.f, 15) != SL_STATUS_OK)
@@ -231,9 +237,9 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to acquire lux, uvi, and ir readings \r\n");
         while(true); // crash here
     }
-    else
+    else if(!calibrating)
     {
-        //app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux.f, uvi.f, ir.f);
+        app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux.f, uvi.f, ir.f);
     }
 
     /* Packet Construction Test */
@@ -264,7 +270,7 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to acquire temperature, pressure, and humidity readings \r\n");
         while(true); // crash here
     }
-    else
+    else if(!calibrating)
     {
         app_log_info("temps=%0.2lf C, humid=%0.2lf %", temps.f, humid.f);
     }
@@ -278,7 +284,7 @@ SL_WEAK void app_process_action(void)
      * 
      * This makes our min/max temp we can send over the air: -255.127 to 255.127
      */
-    
+
     // temperature should receive -255.127
     guardener_float_t test;
     test.f = -255.127;
@@ -300,64 +306,71 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to acquire moisture sensor value \r\n");
         while(true); // crash here
     }
-    else
+    else if(!calibrating)
     {
         // if calibrated, can be % instead of mV
         app_log_info("mvolts=%lu mV", mvolts);
     }
-    
+
     // millivols should be 0x0123
     tmp = 0x23;
     guardener_adv_data.mvolts_LO = tmp & 0xFF;
     tmp = 0x01;
     guardener_adv_data.mvolts_HI = (tmp >> 8) & 0xFF;
 
-    if (interrupt_triggered)
+    if(interrupt_triggered)
     {
         interrupt_triggered = false; // debugger stop here to verify
         if(usr_btn_pressed == true)
         {
-            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
+            calibrating = true; // Stops app log prints during calibration process
+            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n", pressed_time,
+                         released_time);
         }
         else if(usr_btn_pressed == false)
         {
-          app_log_info("User Interface Button has been released");
-          if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
-          {
+            app_log_info("User Interface Button has been released");
+            if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
+            {
             app_log_info("                                        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n", released_time -  pressed_time, released_time, pressed_time);
           }
-          else if(released_time - pressed_time >= LONG_PRESS )
-          {
-            // Let's have the procedure be this for now:
-            // Long press 1, go from start to dry
-            // Long press again to go to wet, set up and then press again, the
-            // cal procedure will call the function to normalize
-            
-            cal_state = next_cal_state(cal_state);
+            else if(released_time - pressed_time >= LONG_PRESS)
+            {
+                // Let's have the procedure be this for now:
+                // Long press 1, go from start to dry
+                // Long press again to go to wet, set up and then press again, the
+                // cal procedure will call the function to normalize
 
-            //else if(cfg->moisture_cal_state == CAL_NOT_OK)
-            //  next_cal_state(&ms_cfg);
+                cal_state = next_cal_state(cal_state);
 
-            app_log_info("calibration state is at %u", cal_state);
-            app_log_info("                                        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n", released_time -  pressed_time, released_time, pressed_time);
-          }
+                //else if(cfg->moisture_cal_state == CAL_NOT_OK)
+                //  next_cal_state(&ms_cfg);
 
-          //app_log_info("User Interface Button has been released, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
+                app_log_info("calibration state is at %u", cal_state);
+                app_log_info(
+                        "                                        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
+                        released_time - pressed_time, released_time, pressed_time);
 
-          //%d.%d-b%d\n", evt->data.evt_system_boot.major,
-          //        evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
-          //        evt->data.evt_system_boot.build);
+                // Determine if calibration is done; return print statements if it is
+                calibrating = (cal_state == CAL_OK) ? false : true;
+            }
+
+            //app_log_info("User Interface Button has been released, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
+
+            //%d.%d-b%d\n", evt->data.evt_system_boot.major,
+            //        evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
+            //        evt->data.evt_system_boot.build);
         }
     }
 
-//    // Total packet received should be:
-//    // 0x 02 01 06 05 AA BA BE 0B 08 15 AA BB CC DD EE FF AA FF 01 45 01 23
-//
-//    // Update the custom advertising packet
-//    if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
-//    {
-//        app_log_error("Failed to set advertising data");
-//    }
+    // Total packet received should be:
+    // 0x 02 01 06 05 AA BA BE 0B 08 15 AA BB CC DD EE FF AA FF 01 45 01 23
+
+    // Update the custom advertising packet
+    if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
+    {
+        app_log_error("Failed to set advertising data");
+    }
 
     return;
 }
@@ -374,6 +387,7 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
     sl_status_t sc;
     bd_addr address;
     uint8_t address_type;
+    uint8_t system_id[8];
 
     // Handle stack events
     switch(SL_BT_MSG_ID(evt->header))
@@ -394,6 +408,19 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
                          address_type ? "static random" : "public device", address.addr[5], address.addr[4],
                          address.addr[3], address.addr[2], address.addr[1], address.addr[0]);
+
+            // Pad and reverse unique ID to get System ID.
+            system_id[0] = address.addr[5];
+            system_id[1] = address.addr[4];
+            system_id[2] = address.addr[3];
+            system_id[3] = 0xFF;
+            system_id[4] = 0xFE;
+            system_id[5] = address.addr[2];
+            system_id[6] = address.addr[1];
+            system_id[7] = address.addr[0];
+
+            sc = sl_bt_gatt_server_write_attribute_value(gattdb_system_id, 0, sizeof(system_id), system_id);
+            app_assert_status(sc);
 
             // Create an advertising set.
             sc = sl_bt_advertiser_create_set(&advertising_set_handle);
