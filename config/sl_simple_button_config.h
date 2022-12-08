@@ -27,7 +27,7 @@
 // <i> Default: 5
 // <i> Defines the number of calls to sl_simple_button_poll_step wherein the button
 // <i> state must remain the same before the button state is considered debounced
-#define SL_SIMPLE_BUTTON_DEBOUNCE_BITS    9U
+#define SL_SIMPLE_BUTTON_DEBOUNCE_BITS    15U
 
 // <o SL_SIMPLE_BUTTON_GPIO_MODE>
 // <gpioModeInput=> GPIO Input
