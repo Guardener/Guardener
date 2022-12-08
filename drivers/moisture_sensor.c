@@ -21,13 +21,16 @@
 #include "sl_pwm.h"
 #include "sl_pwm_instances.h"
 #include "sl_sleeptimer.h"
-
-#ifdef app_log_debug
 #include "app_log.h"
+
+static sl_status_t ret = SL_STATUS_OK;
+#ifdef app_log_debug
 #define DLOGRET(...)                                                                                                   \
     do {                                                                                                               \
         app_log_debug(__VA_ARGS__);                                                                                    \
-        sl_status_print(ret);                                                                                          \
+        if (ret != SL_STATUS_OK) { \
+            sl_status_print(ret);                                                                                          \
+        } \
         app_log_nl();                                                                                                  \
     } while (0)
 #else
@@ -38,11 +41,8 @@
 #define app_log_nl(...) do { /* nop */ } while (0)
 #endif
 
-
-
-
 static bool moisture_sensor_initialized = false;
-static bool moisture_sensor_calibrated  = false;
+static bool moisture_sensor_calibrated = false;
 static sl_pwm_instance_t pwm_instance = {0};
 static ADC_TypeDef *adc_instance = 0;
 static volatile uint32_t sample;
@@ -50,9 +50,6 @@ static volatile uint32_t millivolts;
 static float scaling_factor;
 //static uint32_t scaling_diff;
 const float MAX_VAL = 100.0;
-
-
-
 
 //sl_status_t guardener_sine_wave_init(moisture_sensor_cfg_t* cfg)
 //{
@@ -92,7 +89,7 @@ const float MAX_VAL = 100.0;
 
 uint32_t ms_get_millivolts()
 {
-    if (!moisture_sensor_initialized)
+    if(!moisture_sensor_initialized)
     {
         DLOGRET("Moisture Sensor is not yet initialized");
         return -1;
@@ -119,14 +116,14 @@ uint32_t ms_get_millivolts()
     // Calculate input voltage in mV
     millivolts = (sample * 2500) / 4096;
 
-    if (!moisture_sensor_calibrated)
+    if(!moisture_sensor_calibrated)
     {
         DLOGRET("WARNING: Moisture Sensor is not yet calibrated");
 
     }
     else
     {
-     // manipulate millivolts to nice scale
+        // manipulate millivolts to nice scale
         millivolts = (millivolts - millivolts_when_wet) * scaling_factor;
     }
 
@@ -135,7 +132,7 @@ uint32_t ms_get_millivolts()
 
 sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
 {
-    sl_status_t ret = SL_STATUS_OK;
+    ret = SL_STATUS_OK;
 
     // PWM initialized by sl_pwm driver via TIMER1's CCO using PF7
     pwm_instance = cfg->pwm;
@@ -163,54 +160,56 @@ sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
     return ret;
 }
 
-moisture_cal_state_t next_cal_state(moisture_cal_state_t cal_state){
+moisture_cal_state_t next_cal_state(moisture_cal_state_t cal_state)
+{
     //sl_status_t sc = SL_STATUS_OK;
-    moisture_cal_state_t ret = cal_state;
-  //moisture_sensor_cfg_
-  if(cal_state == CAL_START)
-  {
-    DLOGRET("CAL_START");// \n\t INSTRUCTIONS: please have in a DRY spot");
-    moisture_sensor_calibrated = false;
-    //increment the state... is this a dead state tho do we need it??
-    ret++;
-  }
-  else if(cal_state == CAL_DRY)
-  {
-    DLOGRET("CAL_DRY");// Moisture Sensor DRY: %lu mV  \n\t INSTRUCTIONS: Place finger(s) on senor, or place in a cup of water", millivolts_when_dry);
-    millivolts_when_dry = ms_get_millivolts();
-    ret++;
-  }
-  else if(cal_state == CAL_WET)
-  {
-    DLOGRET("CAL_WET");//: Moisture Sensor WET: %lu mV, \n\t INSTRUCTIONS: LONG PRESS Interactive Button to Continue", millivolts_when_wet);
-    millivolts_when_wet = ms_get_millivolts();
-    scaling_factor = normalize_moisture(MAX_VAL, millivolts_when_dry, millivolts_when_wet);
-    ret++;
-  }
-  else if(cal_state == CAL_OK)
-  {
-    DLOGRET("CAL_OK");// Moisture Sensor OK");
-    ret = CAL_START;
-    //ret = SL_STATUS_NOT_SUPPORTED;
-  }
-  else
-    cal_state = CAL_START;
-  /* TODO consider faults later
-  else if(moisture_sensor_data == CAL_NOT_OK)
-  {
-    cal_state = CAL_NOT_OK;
-    moisture_sensor_calibrated = false;
-  }
-  */
+    moisture_cal_state_t ret_state = cal_state;
+    //moisture_sensor_cfg_
+    if(cal_state == CAL_START)
+    {
+        DLOGRET("CAL_START"); // \n\t INSTRUCTIONS: please have in a DRY spot");
+        moisture_sensor_calibrated = false;
+        //increment the state... is this a dead state tho do we need it??
+        ret_state++;
+    }
+    else if(cal_state == CAL_DRY)
+    {
+        DLOGRET("CAL_DRY"); // Moisture Sensor DRY: %lu mV  \n\t INSTRUCTIONS: Place finger(s) on senor, or place in a cup of water", millivolts_when_dry);
+        millivolts_when_dry = ms_get_millivolts();
+        ret_state++;
+    }
+    else if(cal_state == CAL_WET)
+    {
+        DLOGRET("CAL_WET"); //: Moisture Sensor WET: %lu mV, \n\t INSTRUCTIONS: LONG PRESS Interactive Button to Continue", millivolts_when_wet);
+        millivolts_when_wet = ms_get_millivolts();
+        scaling_factor = normalize_moisture(MAX_VAL, millivolts_when_dry, millivolts_when_wet);
+        ret_state++;
+    }
+    else if(cal_state == CAL_OK)
+    {
+        DLOGRET("CAL_OK"); // Moisture Sensor OK");
+        ret_state = CAL_START;
+        //ret = SL_STATUS_NOT_SUPPORTED;
+    }
+    else
+        cal_state = CAL_START;
+    /* TODO consider faults later
+     else if(moisture_sensor_data == CAL_NOT_OK)
+     {
+     cal_state = CAL_NOT_OK;
+     moisture_sensor_calibrated = false;
+     }
+     */
 
-  return ret;
+    return ret_state;
 }
 
-float normalize_moisture(float max_val, uint32_t dry, uint32_t wet){
+float normalize_moisture(float max_val, uint32_t dry, uint32_t wet)
+{
     uint32_t scaling_diff;
-    float ret = 0;
-  // 
-    if(wet>dry)
+    float ret_moisture = 0;
+    //
+    if(wet > dry)
     {
         DLOGRET("Moisture Sensor WET is more than DRY?: %lu %lu mV", dry, wet);
         scaling_diff = 1;
@@ -220,14 +219,12 @@ float normalize_moisture(float max_val, uint32_t dry, uint32_t wet){
         scaling_diff = dry - wet;
     }
 
-    ret = max_val*0.99 / scaling_diff;
-
+    ret_moisture = max_val * 0.99 / scaling_diff;
 
     DLOGRET("Moisture Sensor DRY: %lu mV", dry);
     DLOGRET("Moisture Sensor WET: %lu mV", wet);
     moisture_sensor_calibrated = true;
 
-    return ret;
+    return ret_moisture;
 }
-
 

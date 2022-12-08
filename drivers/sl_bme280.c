@@ -17,11 +17,25 @@
 #include "sl_bme280.h"
 #include "bme280.h"
 #include "sl_sleeptimer.h"
+#include "app_log.h"
 #include <stdbool.h>
 
-#ifndef app_log_error
-#define app_log_error(...) do { /* nop */ } while (0)
+static sl_status_t ret = SL_STATUS_OK;
+#ifdef app_log_debug
+#define DLOGRET(...)                                                                                                   \
+    do {                                                                                                               \
+        app_log_debug(__VA_ARGS__);                                                                                    \
+        if (ret != SL_STATUS_OK) { \
+            sl_status_print(ret);                                                                                          \
+        } \
+        app_log_nl();                                                                                                  \
+    } while (0)
+#else
+#define DLOGRET(...) do { /* nop */ } while (0)
 #define app_log_debug(...) do { /* nop */ } while (0)
+#define app_log_info(...) do { /* nop */ } while (0)
+#define app_log_error(...) do { /* nop */ } while (0)
+#define app_log_nl(...) do { /* nop */ } while (0)
 #endif
 
 static bool bme280_initialized_s = false, bme280_asleep = false;
