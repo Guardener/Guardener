@@ -42,8 +42,6 @@
 #ifdef SL_CATALOG_CLI_PRESENT
 #include "sl_cli.h"
 #endif // SL_CATALOG_CLI_PRESENT
-//#include "sl_sensor_rht.h"
-#include "sl_health_thermometer.h"
 #include "app.h"
 #include "sl_i2cspm_si1145_config.h"
 #include "si1145.h"
@@ -66,9 +64,6 @@
   app_log_level(APP_LOG_LEVEL_INFO, __VA_ARGS__);   \
   app_log_append(APP_LOG_NEW_LINE)
 #endif
-
-// Connection handle.
-static uint8_t app_connection = 0;
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
@@ -132,9 +127,6 @@ static volatile bool usr_btn_pressed = false, interrupt_triggered = false;
 
 // Periodic timer handle.
 static sl_simple_timer_t app_periodic_timer;
-
-// Periodic timer callback.
-static void app_periodic_timer_cb(sl_simple_timer_t* timer, void* data);
 
 /**************************************************************************//**
  * Application Init.
@@ -334,7 +326,6 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
     sl_status_t sc;
     bd_addr address;
     uint8_t address_type;
-    uint8_t system_id[8];
 
     // Handle stack events
     switch(SL_BT_MSG_ID(evt->header))
@@ -350,19 +341,6 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             // Extract unique ID from BT Address.
             sc = sl_bt_system_get_identity_address(&address, &address_type);
-            app_assert_status(sc);
-
-            // Pad and reverse unique ID to get System ID.
-            system_id[0] = address.addr[5];
-            system_id[1] = address.addr[4];
-            system_id[2] = address.addr[3];
-            system_id[3] = 0xFF;
-            system_id[4] = 0xFE;
-            system_id[5] = address.addr[2];
-            system_id[6] = address.addr[1];
-            system_id[7] = address.addr[0];
-
-            sc = sl_bt_gatt_server_write_attribute_value(gattdb_system_id, 0, sizeof(system_id), system_id);
             app_assert_status(sc);
 
             app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
@@ -396,8 +374,8 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             // Our custom data within the advertisement packets
             // Company ID = 0xBABE
-            guardener_adv_data.company_LO = 0xBE;
-            guardener_adv_data.company_HI = 0xBA;
+            guardener_adv_data.company_LO = 0xBA;
+            guardener_adv_data.company_HI = 0xBE;
 
             // Device name
             char name[] = "Guardener";
@@ -434,7 +412,7 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
              * sl_bt_advertiser_scannable_non_connectable // (0x3) Undirected scannable (Non-connectable but responds to scan requests).
              * sl_bt_advertiser_connectable_non_scannable // (0x4) Undirected connectable non-scannable. This mode can only be used in extended advertising PDUs.
              */
-            sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_scannable_non_connectable);
+            sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
             app_assert_status(sc);
 
             app_log_info("Started advertising\n");
@@ -498,39 +476,6 @@ void sl_bt_connection_closed_cb(uint16_t reason, uint8_t connection)
 }
 
 /**************************************************************************//**
- * Health Thermometer - Temperature Measurement
- * Indication changed callback
- *
- * Called when indication of temperature measurement is enabled/disabled by
- * the client.
- *****************************************************************************/
-void sl_bt_ht_temperature_measurement_indication_changed_cb(uint8_t connection,
-                                                            sl_bt_gatt_client_config_flag_t client_config)
-{
-    sl_status_t sc;
-    app_connection = connection;
-    // Indication or notification enabled.
-    if(sl_bt_gatt_disable != client_config)
-    {
-        // Start timer used for periodic indications.
-        sc = sl_simple_timer_start(&app_periodic_timer,
-        SL_BT_HT_MEASUREMENT_INTERVAL_SEC * 1000,
-                                   app_periodic_timer_cb,
-                                   NULL,
-                                   true);
-        app_assert_status(sc);
-        // Send first indication.
-        app_periodic_timer_cb(&app_periodic_timer, NULL);
-    }
-    // Indications disabled.
-    else
-    {
-        // Stop timer used for periodic indications.
-        (void)sl_simple_timer_stop(&app_periodic_timer);
-    }
-}
-
-/**************************************************************************//**
  * Simple Button
  * Button state changed callback
  * @param[in] handle Button event handle
@@ -554,56 +499,6 @@ void sl_button_on_change(const sl_button_t* handle)
         {
             usr_btn_pressed = false;
         }
-    }
-}
-
-/**************************************************************************//**
- * Timer callback
- * Called periodically to time periodic temperature measurements and indications.
- *****************************************************************************/
-static void app_periodic_timer_cb(sl_simple_timer_t* timer, void* data)
-{
-    (void)data;
-    (void)timer;
-    sl_status_t sc;
-//    int32_t temperature = 0;
-//    uint32_t humidity = 0;
-//    float tmp_c = 0.0;
-    float tmp_f = 0.0;
-
-    // Measure temperature; units are % and milli-Celsius.
-//    sc = sl_sensor_rht_get(&humidity, &temperature);
-    float temperature = 0.0, humidity = 0.0;
-    sc = sl_bme280_force_get_readings(&temperature, NULL, &humidity);
-    if(SL_STATUS_NOT_INITIALIZED == sc)
-    {
-        app_log_info("Relative Humidity and Temperature sensor is not initialized.");
-        app_log_nl();
-    }
-    else if(sc != SL_STATUS_OK)
-    {
-        app_log_warning("Invalid RHT reading: %0.2lf %0.2lf\n", humidity, temperature);
-    }
-
-    // button 0 pressed: overwrite temperature with -20C.
-    if(usr_btn_pressed)
-    {
-        temperature = -20 * 1000;
-    }
-
-//    tmp_c = (float)temperature / 1000;
-//    app_log_info("Temperature: %5.2f C\n", tmp_c);
-    app_log_info("Temperature: %5.2f C\n", temperature);
-    // Send temperature measurement indication to connected client.
-//    sc = sl_bt_ht_temperature_measurement_indicate(app_connection, temperature, false);
-    // Conversion to Fahrenheit: F = C * 1.8 + 32
-    tmp_f = (float)(temperature*18+320000)/10000;
-    app_log_info("Temperature: %5.2f F\n", tmp_f);
-    // Send temperature measurement indication to connected client.
-    sc = sl_bt_ht_temperature_measurement_indicate(app_connection, (temperature*18+320000)/10, true);
-    if(sc)
-    {
-        app_log_warning("Failed to send temperature measurement indication\n");
     }
 }
 
