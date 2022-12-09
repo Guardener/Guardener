@@ -225,24 +225,17 @@ SL_WEAK void app_process_action(void)
 
     /* Packet Construction Test */
     // lux received should be 0xAABBCC
-    uint8_t tmp = 0xCC;
-    app_data.lux_LO = tmp & 0xFF;
-    tmp = 0xBB;
-    app_data.lux_MID = (tmp >> 8) & 0xFF;
-    tmp = 0xAA;
-    app_data.lux_HI = (tmp >> 16) & 0xFF;
+    app_data.lux_LO  = 0xCC;
+    app_data.lux_MID = 0xBB;
+    app_data.lux_HI  = 0xAA;
 
     // uvi should be 0xDDEE
-    tmp = 0xEE;
-    app_data.uvi_LO = tmp & 0xFF;
-    tmp = 0xDD;
-    app_data.uvi_HI = (tmp >> 8) & 0xFF;
+    app_data.uvi_LO = 0xEE;
+    app_data.uvi_HI = 0xDD;
 
     // ir should be 0xFFAA
-    tmp = 0xAA;
-    app_data.ir_LO = tmp & 0xFF;
-    tmp = 0xFF;
-    app_data.ir_HI = (tmp >> 8) & 0xFF;
+    app_data.ir_LO = 0xAA;
+    app_data.ir_HI = 0xFF;
 
     // Start BME280 Test
     guardener_float_t temps, humid;
@@ -294,10 +287,8 @@ SL_WEAK void app_process_action(void)
     }
 
     // millivols should be 0x0123
-    tmp = 0x23;
-    app_data.mvolts_LO = tmp & 0xFF;
-    tmp = 0x01;
-    app_data.mvolts_HI = (tmp >> 8) & 0xFF;
+    app_data.mvolts_LO = 0x23;
+    app_data.mvolts_HI = 0x01;
 
     if(interrupt_triggered)
     {
@@ -348,12 +339,6 @@ SL_WEAK void app_process_action(void)
 
     /* Update the custom advertising packet's payload */
     strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
-
-    // Total packet received should be:
-    //      length: 0x0F type: 0xFF
-    //      company code: 0xBA 0xBE
-    //      data: 0xAABBCCDDEEFFAAFF01450123
-    // TODO!: receiving 0xCC0000000000000000000000 instead of the expected...
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
