@@ -58,23 +58,31 @@ static uint8_t advertising_set_handle = 0xff;
 #define SHORT_PRESS 2000
 #define LONG_PRESS 20000
 
+// floats are 32-bit
 typedef struct {
-    uint8_t lux_LO;
-    uint8_t lux_MID;
-    uint8_t lux_HI; // 0 to 16,777,216 lux
-    uint8_t uvi_LO;
-    uint8_t uvi_HI; // 0 to 65,535 uvi
-    uint8_t ir_LO;
-    uint8_t ir_HI; // 0 to 65,535 ir
-    uint8_t temp_LO;
-    uint8_t temp_HI; // -255.127 to 255.127 degrees celsius
+    uint8_t lux_0;
+    uint8_t lux_1;
+    uint8_t lux_2;
+    uint8_t lux_3;
+    uint8_t uvi_0;
+    uint8_t uvi_1;
+    uint8_t uvi_2;
+    uint8_t uvi_3;
+    uint8_t ir_0;
+    uint8_t ir_1;
+    uint8_t ir_2;
+    uint8_t ir_3;
+    uint8_t temp_0;
+    uint8_t temp_1;
+    uint8_t temp_2;
+    uint8_t temp_3;
     uint8_t humidity; // 0 to 255 percent relative humidity
     uint8_t mvolts_LO;
     uint8_t mvolts_HI; // 0 to 65,535 millivolts
 } guardener_app_data_t;
 
 // The advertisement data structure
-#define APP_DATA_BYTES  (12)
+#define APP_DATA_BYTES  (19)
 typedef struct {
     // length of the type + flags + payload
     uint8_t adv_len;
@@ -90,17 +98,6 @@ typedef struct {
     char dummy;        // Space for null terminator
     uint8_t data_size; // Actual length of advertising data
 } guardener_adv_data_t;
-
-// Helper union to make it easier to convert to BLE packets
-typedef union {
-    float f;
-    struct
-    {
-        uint32_t m :23;
-        uint32_t e :8;
-        uint32_t s :1;
-    } _f;
-} guardener_float_t;
 
 static guardener_adv_data_t guardener_adv_data = {0};
 
@@ -212,68 +209,30 @@ SL_WEAK void app_process_action(void)
     guardener_app_data_t app_data = {0};
 
     // Start Si1145 Test
-    guardener_float_t lux, uvi, ir;
-    if(si1145_get_lux_uvi_ir(&lux.f, &uvi.f, &ir.f, 15) != SL_STATUS_OK)
+    float lux, uvi, ir;
+    if(si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15) != SL_STATUS_OK)
     {
         app_log_error("Failed to acquire lux, uvi, and ir readings \r\n");
         while(true); // crash here
     }
     else if(!calibrating)
     {
-        app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux.f, uvi.f, ir.f);
+        app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux, uvi, ir);
     }
 
-    /* Packet Construction Test */
-    // lux received should be 0xAABBCC
-    app_data.lux_LO  = 0xCC;
-    app_data.lux_MID = 0xBB;
-    app_data.lux_HI  = 0xAA;
-
-    // uvi should be 0xDDEE
-    app_data.uvi_LO = 0xEE;
-    app_data.uvi_HI = 0xDD;
-
-    // ir should be 0xFFAA
-    app_data.ir_LO = 0xAA;
-    app_data.ir_HI = 0xFF;
-
-    // Start BME280 Test
-    guardener_float_t temps, humid;
-    if(sl_bme280_force_get_readings(&temps.f, NULL, &humid.f) != SL_STATUS_OK)
+    // Acquire BME280's Readings
+    float temps, humid;
+    if(sl_bme280_force_get_readings(&temps, NULL, &humid) != SL_STATUS_OK)
     {
         app_log_error("Failed to acquire temperature, pressure, and humidity readings \r\n");
         while(true); // crash here
     }
     else if(!calibrating)
     {
-        app_log_info("temps=%0.2lf C, humid=%0.2lf %", temps.f, humid.f);
+        app_log_info("temps=%0.2lf C, humid=%0.2lf %%", temps, humid);
     }
 
-    /**
-     * To save space, parsing out two significant figures of the mantissa will allow us to send
-     * more data overall. The packet structure will convert the 32 bits of a float to a 16 bit float.
-     * 
-     * float data:  sign [bit 31]; exponent [30-23]; mantissa [22-0]
-     * packet data: sign [bit 15]; exponent [14-7];  mantissa [6-0]
-     * 
-     * This makes our min/max temp we can send over the air: -255.127 to 255.127
-     */
-
-    // temperature should receive -255.127
-    guardener_float_t test;
-    test.f = -255.127;
-
-    uint16_t tmp_16 = 0;
-    tmp_16 |= (((uint16_t)test._f.s & 0xFFFF) << 15);  // sign
-    tmp_16 |= (((uint16_t)test._f.e & 0xFFFF) << 7);   // exponent
-    tmp_16 |= (((uint16_t)test._f.m & 0xFFFF) << 0);   // mantissa
-
-    app_data.temp_LO = tmp_16 & 0xFF;
-    app_data.temp_HI = (tmp_16 >> 8) & 0xFF;
-
-    // humidity should be 0x45
-    app_data.humidity = 0x45;
-
+    // Acquire Moisture Sensor's Readings
     uint32_t mvolts = ms_get_millivolts();
     if(mvolts == (uint32_t)-1)
     {
@@ -285,10 +244,6 @@ SL_WEAK void app_process_action(void)
         // if calibrated, can be % instead of mV
         app_log_info("mvolts=%lu mV", mvolts);
     }
-
-    // millivols should be 0x0123
-    app_data.mvolts_LO = 0x23;
-    app_data.mvolts_HI = 0x01;
 
     if(interrupt_triggered)
     {
@@ -336,6 +291,63 @@ SL_WEAK void app_process_action(void)
             //        evt->data.evt_system_boot.build);
         }
     }
+
+    // TODO: Use the calibrated values to adjust `mvolts` var into a scale of 0 to 100%
+    uint8_t lux_bytes[sizeof(float)];
+    *(float*)(lux_bytes) = lux;
+    app_data.lux_0 = lux_bytes[0];
+    app_data.lux_1 = lux_bytes[1];
+    app_data.lux_2 = lux_bytes[2];
+    app_data.lux_3 = lux_bytes[3];
+    app_log_info("sending lux_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", lux_bytes[0], lux_bytes[1], lux_bytes[2], lux_bytes[3]);
+    float re_lux = *(float*)(lux_bytes);  // convert bytes back to float
+    app_log_info("client should convert lux back to float and get: %.2f", re_lux);
+
+    uint8_t uvi_bytes[sizeof(float)];
+    *(float*)(uvi_bytes) = uvi;
+    app_data.uvi_0 = uvi_bytes[0];
+    app_data.uvi_1 = uvi_bytes[1];
+    app_data.uvi_2 = uvi_bytes[2];
+    app_data.uvi_3 = uvi_bytes[3];
+    app_log_info("sending uvi_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", uvi_bytes[0], uvi_bytes[1], uvi_bytes[2], uvi_bytes[3]);
+    float re_uvi = *(float*)(uvi_bytes);  // convert bytes back to float
+    app_log_info("client should convert uvi back to float and get: %.2f", re_uvi);
+    
+    uint8_t ir_bytes[sizeof(float)];
+    *(float*)(ir_bytes) = ir;
+    app_data.ir_0 = ir_bytes[0];
+    app_data.ir_1 = ir_bytes[1];
+    app_data.ir_2 = ir_bytes[2];
+    app_data.ir_3 = ir_bytes[3];
+    app_log_info("sending ir_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", ir_bytes[0], ir_bytes[1], ir_bytes[2], ir_bytes[3]);
+    float re_ir = *(float*)(ir_bytes);  // convert bytes back to float
+    app_log_info("client should convert ir back to float and get: %.2f", re_ir);
+    
+    uint8_t temp_bytes[sizeof(float)];
+    *(float*)(temp_bytes) = temps;
+    app_data.temp_0 = temp_bytes[0];
+    app_data.temp_1 = temp_bytes[1];
+    app_data.temp_2 = temp_bytes[2];
+    app_data.temp_3 = temp_bytes[3];
+    app_log_info("sending temp_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", temp_bytes[0], temp_bytes[1], temp_bytes[2], temp_bytes[3]);
+    float re_temp = *(float*)(temp_bytes);  // convert bytes back to float
+    app_log_info("client should convert uvi back to float and get: %.2f", re_temp);
+    
+    uint8_t humid_temp = (uint8_t)humid;
+    app_data.humidity = humid_temp;
+    app_log_info("client should receive humidity level of %d %% as 0x%.2X", humid_temp, humid_temp);
+
+    uint16_t mv_temp = (uint16_t)mvolts;
+    app_data.mvolts_LO = mv_temp & 0xFF;
+    app_data.mvolts_HI = (mv_temp >> 8) & 0xFF;
+    app_log_info("client should receive moisture level of %d as 0x%.2X 0x%.2X", mv_temp, app_data.mvolts_LO, app_data.mvolts_HI);
+
+    app_log_warning("Client should receive data as 0x%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X\n",
+                    lux_bytes[0], lux_bytes[1], lux_bytes[2], lux_bytes[3],
+                    uvi_bytes[0], uvi_bytes[1], uvi_bytes[2], uvi_bytes[3],
+                    ir_bytes[0], ir_bytes[1], ir_bytes[2], ir_bytes[3],
+                    temp_bytes[0], temp_bytes[1], temp_bytes[2], temp_bytes[3],
+                    humid_temp, mv_temp);
 
     /* Update the custom advertising packet's payload */
     strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
@@ -420,25 +432,32 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             app_assert_status(sc);
 
             /* Construct the advertisement packet with our desired initial data */
-            // 1+2+12 bytes for type, company ID, and the payload
-            guardener_adv_data.adv_len = 15;
+            // 1+2+19 bytes for type, company ID, and the payload
+            guardener_adv_data.adv_len = 22;
             guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
             guardener_adv_data.mfr_id_LO = 0xBABE & 0xFF;
             guardener_adv_data.mfr_id_HI = (0xBABE >> 8) & 0xFF;
 
             guardener_app_data_t app_data = {
-                .lux_LO = 0x11,
-                .lux_MID = 0x22,
-                .lux_HI = 0x33,
-                .uvi_LO = 0x44,
-                .uvi_HI = 0x55,
-                .ir_LO = 0x66,
-                .ir_HI = 0x77,
-                .temp_LO = 0x88,
-                .temp_HI = 0x99,
-                .humidity = 0xAA,
-                .mvolts_LO = 0xBB,
-                .mvolts_HI = 0xCC
+                .lux_0 = 0x11,
+                .lux_1 = 0x22,
+                .lux_2 = 0x33,
+                .lux_3 = 0x44,
+                .uvi_0 = 0x55,
+                .uvi_1 = 0x66,
+                .uvi_2 = 0x77,
+                .uvi_3 = 0x88,
+                .ir_0 = 0x99,
+                .ir_1 = 0xAA,
+                .ir_2 = 0xBB,
+                .ir_3 = 0xCC,
+                .temp_0 = 0xDD,
+                .temp_1 = 0xEE,
+                .temp_2 = 0xFF,
+                .temp_3 = 0x00,
+                .humidity = 0x11,
+                .mvolts_LO = 0x22,
+                .mvolts_HI = 0x33
             };
             strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
 
