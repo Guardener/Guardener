@@ -52,45 +52,13 @@
 #include "moisture_sensor.h"
 #include "sl_button.h"
 
-#ifndef app_log_error
-#define app_log_error(...) do { /* nop */ } while (0)
-#define app_log_debug(...) do { /* nop */ } while (0)
-#define app_log_info(...) do { /* nop */ } while (0)
-#endif
-
-// New Line fix; If successful, place these macros someplace global
-#ifdef app_log_info
-#undef app_log_info
-#define app_log_info(...)                           \
-  app_log_level(APP_LOG_LEVEL_INFO, __VA_ARGS__);   \
-  app_log_append(APP_LOG_NEW_LINE)
-#endif
-
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
 #define SHORT_PRESS 2000
 #define LONG_PRESS 20000
 
-// The advertisement data structure
-#define BLE_ADV_PACKET_LENGTH   31 // total bytes in a BLE Advertisement Packet
-#define BLE_REQ_PACKET_ELEMENTS 7 // num of bytes required for BT packet structure
-#define CUSTOM_ADV_AVAIL_LENGTH (BLE_ADV_PACKET_LENGTH - BLE_REQ_PACKET_ELEMENTS) // remaining about for us to use
-#define CUSTOM_ADV_ELEMENTS     11 // 3 bytes for lux, 2 for uvi, 2 for ir, 1 for temp, 1 for RH, 2 for millivolts
-#define NAME_MAX_LENGTH (CUSTOM_ADV_AVAIL_LENGTH - (CUSTOM_ADV_ELEMENTS + 2 /*bytes for name length + type */))
-
 typedef struct {
-    // BLE advertisement packet structure
-    uint8_t len_flags;
-    uint8_t type_flags;
-    uint8_t val_flags;
-    uint8_t len_manuf;
-    uint8_t type_manuf;
-    // First two bytes must contain the manufacturer ID (little-endian order)
-    uint8_t company_LO;
-    uint8_t company_HI;
-
-    // The following is the custom advertisement data segment
     uint8_t lux_LO;
     uint8_t lux_MID;
     uint8_t lux_HI; // 0 to 16,777,216 lux
@@ -103,27 +71,34 @@ typedef struct {
     uint8_t humidity; // 0 to 255 percent relative humidity
     uint8_t mvolts_LO;
     uint8_t mvolts_HI; // 0 to 65,535 millivolts
+} guardener_app_data_t;
 
-    // length of the name AD element is variable, adding it last to keep things simple
-    uint8_t len_name;
-    uint8_t type_name;
-    // NAME_MAX_LENGTH must be sized so that total length of data does not exceed 31 bytes
-    char name[NAME_MAX_LENGTH];
+// The advertisement data structure
+#define APP_DATA_BYTES  (12)
+typedef struct {
+    // length of the type + flags + payload
+    uint8_t adv_len;
+    // flag for type of packet; See Core Specification Supplement, Part A, Section 1.4
+    uint8_t adv_type;
+    // manufacture custom advertisement packets require manufacture ID
+    uint8_t mfr_id_LO;
+    uint8_t mfr_id_HI;
+    // custom payload to be broadcasted
+    uint8_t payload[APP_DATA_BYTES];
 
     // These values are NOT included in the actual advertising payload, just for bookkeeping
     char dummy;        // Space for null terminator
     uint8_t data_size; // Actual length of advertising data
-
-
 } guardener_adv_data_t;
 
 // Helper union to make it easier to convert to BLE packets
 typedef union {
     float f;
-    struct {
-        uint32_t m : 23;
-        uint32_t e : 8;
-        uint32_t s : 1;
+    struct
+    {
+        uint32_t m :23;
+        uint32_t e :8;
+        uint32_t s :1;
     } _f;
 } guardener_float_t;
 
@@ -138,6 +113,9 @@ static volatile bool usr_btn_pressed = false, interrupt_triggered = false, calib
 
 // Periodic timer handle.
 static sl_simple_timer_t app_periodic_timer;
+
+// BLE advertisement max interval is 10.24 seconds. this is 1/30th of what we want
+//static volatile uint8_t ble_adv_interval_counter = 0;
 
 uint32_t pressed_time;
 uint32_t released_time;
@@ -158,7 +136,7 @@ SL_WEAK void app_init(void)
         .proxy = false, // disable use of proximity sensor
         .irq = false,   // disable interrupts
         .forced = true  // disable auto mode, use forced readings
-    };   // @formatter:on
+    };    // @formatter:on
     sc = si1145_init(init);
     if(sc != SL_STATUS_OK)
     {
@@ -173,7 +151,7 @@ SL_WEAK void app_init(void)
         .osr_h = BME280_NO_OVERSAMPLING,            /*< humidity oversampling */
         .filter = BME280_FILTER_COEFF_OFF,          /*< filter coefficient */
         .standby_time = BME280_STANDBY_TIME_0_5_MS  /*< standby time */
-    };   // @formatter:on
+    };    // @formatter:on
     sc = sl_bme280_init(SL_I2CSPM_BME280_PERIPHERAL, init_cfg, BME280_FORCED_MODE);
     if(sc != SL_STATUS_OK)
     {
@@ -208,7 +186,7 @@ SL_WEAK void app_init(void)
             .fifoOverwrite = false /** When true, FIFO overwrites old data when full. If false, FIFO discards new data. */
 
         }
-    };   // @formatter:on
+    };    // @formatter:on
     init_moisture_sensor(&ms_cfg);
 }
 
@@ -218,7 +196,7 @@ SL_WEAK void app_init(void)
  *****************************************************************************/
 SL_WEAK void app_process_action(void)
 {
-    if (advertising_set_handle == 0xff)
+    if(advertising_set_handle == 0xff)
     {
         // BT Stack not yet initialized, skip until it's ready
         return;
@@ -229,6 +207,9 @@ SL_WEAK void app_process_action(void)
 
 //    //* Re-enable deeper sleeping states
 //    SLEEP_SleepBlockEnd(sleepEM2);
+
+    // Acquire data to be broadcast
+    guardener_app_data_t app_data = {0};
 
     // Start Si1145 Test
     guardener_float_t lux, uvi, ir;
@@ -245,23 +226,23 @@ SL_WEAK void app_process_action(void)
     /* Packet Construction Test */
     // lux received should be 0xAABBCC
     uint8_t tmp = 0xCC;
-    guardener_adv_data.lux_LO = tmp & 0xFF;
+    app_data.lux_LO = tmp & 0xFF;
     tmp = 0xBB;
-    guardener_adv_data.lux_MID = (tmp >> 8) & 0xFF;
+    app_data.lux_MID = (tmp >> 8) & 0xFF;
     tmp = 0xAA;
-    guardener_adv_data.lux_HI = (tmp >> 16) & 0xFF;
+    app_data.lux_HI = (tmp >> 16) & 0xFF;
 
     // uvi should be 0xDDEE
     tmp = 0xEE;
-    guardener_adv_data.uvi_LO = tmp & 0xFF;
+    app_data.uvi_LO = tmp & 0xFF;
     tmp = 0xDD;
-    guardener_adv_data.uvi_HI = (tmp >> 8) & 0xFF;
+    app_data.uvi_HI = (tmp >> 8) & 0xFF;
 
     // ir should be 0xFFAA
     tmp = 0xAA;
-    guardener_adv_data.ir_LO = tmp & 0xFF;
+    app_data.ir_LO = tmp & 0xFF;
     tmp = 0xFF;
-    guardener_adv_data.ir_HI = (tmp >> 8) & 0xFF;
+    app_data.ir_HI = (tmp >> 8) & 0xFF;
 
     // Start BME280 Test
     guardener_float_t temps, humid;
@@ -294,11 +275,11 @@ SL_WEAK void app_process_action(void)
     tmp_16 |= (((uint16_t)test._f.e & 0xFFFF) << 7);   // exponent
     tmp_16 |= (((uint16_t)test._f.m & 0xFFFF) << 0);   // mantissa
 
-    guardener_adv_data.temp_LO = tmp_16 & 0xFF;
-    guardener_adv_data.temp_HI = (tmp_16 >> 8) & 0xFF;
+    app_data.temp_LO = tmp_16 & 0xFF;
+    app_data.temp_HI = (tmp_16 >> 8) & 0xFF;
 
     // humidity should be 0x45
-    guardener_adv_data.humidity = 0x45;
+    app_data.humidity = 0x45;
 
     uint32_t mvolts = ms_get_millivolts();
     if(mvolts == (uint32_t)-1)
@@ -314,9 +295,9 @@ SL_WEAK void app_process_action(void)
 
     // millivols should be 0x0123
     tmp = 0x23;
-    guardener_adv_data.mvolts_LO = tmp & 0xFF;
+    app_data.mvolts_LO = tmp & 0xFF;
     tmp = 0x01;
-    guardener_adv_data.mvolts_HI = (tmp >> 8) & 0xFF;
+    app_data.mvolts_HI = (tmp >> 8) & 0xFF;
 
     if(interrupt_triggered)
     {
@@ -332,8 +313,10 @@ SL_WEAK void app_process_action(void)
             app_log_info("User Interface Button has been released");
             if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
             {
-            app_log_info("                                        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n", released_time -  pressed_time, released_time, pressed_time);
-          }
+                app_log_info(
+                        "                                        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
+                        released_time - pressed_time, released_time, pressed_time);
+            }
             else if(released_time - pressed_time >= LONG_PRESS)
             {
                 // Let's have the procedure be this for now:
@@ -363,10 +346,14 @@ SL_WEAK void app_process_action(void)
         }
     }
 
-    // Total packet received should be:
-    // 0x 02 01 06 05 AA BA BE 0B 08 15 AA BB CC DD EE FF AA FF 01 45 01 23
+    /* Update the custom advertising packet's payload */
+    strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
 
-    // Update the custom advertising packet
+    // Total packet received should be:
+    //      length: 0x0F type: 0xFF
+    //      company code: 0xBA 0xBE
+    //      data: 0xAABBCCDDEEFFAAFF01450123
+    // TODO!: receiving 0xCC0000000000000000000000 instead of the expected...
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
@@ -388,9 +375,10 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
     bd_addr address;
     uint8_t address_type;
     uint8_t system_id[8];
+    uint32_t event_id = SL_BT_MSG_ID(evt->header);
 
     // Handle stack events
-    switch(SL_BT_MSG_ID(evt->header))
+    switch(event_id)
     {
         // -------------------------------
         // This event indicates the device has started and the radio is ready.
@@ -398,16 +386,16 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
         case sl_bt_evt_system_boot_id:
             // Print boot message.
             app_log_info("Bluetooth stack booted: v%d.%d.%d-b%d\n", evt->data.evt_system_boot.major,
-                         evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
-                         evt->data.evt_system_boot.build);
+                            evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
+                            evt->data.evt_system_boot.build);
 
             // Extract unique ID from BT Address.
             sc = sl_bt_system_get_identity_address(&address, &address_type);
             app_assert_status(sc);
 
             app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
-                         address_type ? "static random" : "public device", address.addr[5], address.addr[4],
-                         address.addr[3], address.addr[2], address.addr[1], address.addr[0]);
+                            address_type ? "static random" : "public device", address.addr[5], address.addr[4],
+                            address.addr[3], address.addr[2], address.addr[1], address.addr[0]);
 
             // Pad and reverse unique ID to get System ID.
             system_id[0] = address.addr[5];
@@ -426,10 +414,10 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             sc = sl_bt_advertiser_create_set(&advertising_set_handle);
             app_assert_status(sc);
 
-            // Set advertising interval to 100ms.
+            // Set advertising interval to 20s.
             sc = sl_bt_advertiser_set_timing(advertising_set_handle, // advertising set handle
-                    160, // min. adv. interval (milliseconds * 1.6)
-                    160, // max. adv. interval (milliseconds * 1.6)
+                    32000, // min. adv. interval (milliseconds * 1.6)
+                    32000, // max. adv. interval (milliseconds * 1.6)
                     0,   // adv. duration
                     0);  // max. num. adv. events
             app_assert_status(sc);
@@ -438,43 +426,39 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             sc = sl_bt_advertiser_set_channel_map(advertising_set_handle, 7 /*All channels*/);
             app_assert_status(sc);
 
+            // Save some power by limiting the broadcast power
+            sc = sl_bt_system_halt(1);
+            app_assert_status(sc);
+            sc = sl_bt_system_set_tx_power(-30, 0, NULL, NULL);
+            app_assert_status(sc);
+            sc = sl_bt_system_halt(0);
+            app_assert_status(sc);
+
             /* Construct the advertisement packet with our desired initial data */
+            // 1+2+12 bytes for type, company ID, and the payload
+            guardener_adv_data.adv_len = 15;
+            guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
+            guardener_adv_data.mfr_id_LO = 0xBABE & 0xFF;
+            guardener_adv_data.mfr_id_HI = (0xBABE >> 8) & 0xFF;
 
-            // Setup the Bluetooth required advertisment variables
-            guardener_adv_data.len_flags = 0x02;
-            guardener_adv_data.type_flags = 0x01;
-            guardener_adv_data.val_flags = 0x06;
-            guardener_adv_data.type_manuf = 0xAA;
-            guardener_adv_data.len_manuf = 5;
+            guardener_app_data_t app_data = {
+                .lux_LO = 0x11,
+                .lux_MID = 0x22,
+                .lux_HI = 0x33,
+                .uvi_LO = 0x44,
+                .uvi_HI = 0x55,
+                .ir_LO = 0x66,
+                .ir_HI = 0x77,
+                .temp_LO = 0x88,
+                .temp_HI = 0x99,
+                .humidity = 0xAA,
+                .mvolts_LO = 0xBB,
+                .mvolts_HI = 0xCC
+            };
+            strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
 
-            // Our custom data within the advertisement packets
-            // Company ID = 0xBABE
-            guardener_adv_data.company_LO = 0xBA;
-            guardener_adv_data.company_HI = 0xBE;
-
-            // Device name
-            char name[] = "Guardener";
-
-            // Name length, excluding null terminator
-            int n = strlen(name);
-            if (n > NAME_MAX_LENGTH) {
-                // Incomplete name
-                guardener_adv_data.type_name = 0x08;
-            }   else {
-                guardener_adv_data.type_name = 0x09;
-            }
-
-            strncpy(guardener_adv_data.name, name, NAME_MAX_LENGTH);
-
-            if (n > NAME_MAX_LENGTH) {
-                n = NAME_MAX_LENGTH;
-            }
-
-            // length of name element is the name string length + 1 for the AD type
-            guardener_adv_data.len_name = 1 + n;
-
-            // Calculate total length of advertising data
-            guardener_adv_data.data_size = 3 + (1 + guardener_adv_data.len_manuf) + (1 + guardener_adv_data.len_name);
+            // total length of advertising data
+            guardener_adv_data.data_size = 1 + guardener_adv_data.adv_len;
 
             // Provide the BT stack the constructed advertisement packet
             sc = sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data);
@@ -482,11 +466,11 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             // Start advertising
             /**
-             * sl_bt_advertiser_non_connectable           // (0x0) Non-connectable non-scannable.
-             * sl_bt_advertiser_connectable_scannable     // (0x2) Undirected connectable scannable. This mode can only be used in legacy advertising PDUs.
-             * sl_bt_advertiser_scannable_non_connectable // (0x3) Undirected scannable (Non-connectable but responds to scan requests).
-             * sl_bt_advertiser_connectable_non_scannable // (0x4) Undirected connectable non-scannable. This mode can only be used in extended advertising PDUs.
-             */
+            * sl_bt_advertiser_non_connectable           // (0x0) Non-connectable non-scannable.
+            * sl_bt_advertiser_connectable_scannable     // (0x2) Undirected connectable scannable. This mode can only be used in legacy advertising PDUs.
+            * sl_bt_advertiser_scannable_non_connectable // (0x3) Undirected scannable (Non-connectable but responds to scan requests).
+            * sl_bt_advertiser_connectable_non_scannable // (0x4) Undirected connectable non-scannable. This mode can only be used in extended advertising PDUs.
+            */
             sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
             app_assert_status(sc);
 
@@ -529,13 +513,9 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             app_log_info("Started advertising\n");
             break;
 
-            ///////////////////////////////////////////////////////////////////////////
-            // Add additional event handlers here as your application requires!      //
-            ///////////////////////////////////////////////////////////////////////////
-
-            // -------------------------------
-            // Default event handler.
+        // Default event handler.
         default:
+            app_log_info("event with no handler: 0x%X", event_id);
             break;
     }
 }

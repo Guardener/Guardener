@@ -20,14 +20,10 @@
 #include "app_log.h"
 #include <stdbool.h>
 
-static sl_status_t ret = SL_STATUS_OK;
 #ifdef app_log_debug
 #define DLOGRET(...)                                                                                                   \
     do {                                                                                                               \
         app_log_debug(__VA_ARGS__);                                                                                    \
-        if (ret != SL_STATUS_OK) { \
-            sl_status_print(ret);                                                                                          \
-        } \
         app_log_nl();                                                                                                  \
     } while (0)
 #else

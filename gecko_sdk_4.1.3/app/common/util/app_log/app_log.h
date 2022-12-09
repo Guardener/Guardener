@@ -399,12 +399,12 @@ uint8_t app_log_filter_mask_get(void);
                        __VA_ARGS__)
 
 #define app_log_debug(...)           \
-  app_log_level(APP_LOG_LEVEL_DEBUG, \
-                __VA_ARGS__)
+  app_log_level(APP_LOG_LEVEL_DEBUG, __VA_ARGS__); \
+                app_log_append(APP_LOG_NEW_LINE)
 
-#define app_log_info(...)           \
-  app_log_level(APP_LOG_LEVEL_INFO, \
-                __VA_ARGS__)
+#define app_log_info(...)                           \
+  app_log_level(APP_LOG_LEVEL_INFO, __VA_ARGS__);   \
+  app_log_append(APP_LOG_NEW_LINE)
 
 #define app_log_warning(...)           \
   app_log_level(APP_LOG_LEVEL_WARNING, \
