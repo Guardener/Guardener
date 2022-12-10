@@ -243,12 +243,6 @@ SL_WEAK void app_process_action(void)
         return;
     }
 
-//    //* I2C TxRx needs to be above EM2 to Tx
-//    SLEEP_SleepBlockBegin(sleepEM2);
-
-//    //* Re-enable deeper sleeping states
-//    SLEEP_SleepBlockEnd(sleepEM2);
-
     /* Acquire data to be broadcast */
 
     // Acquire Si1145's Readings
@@ -403,8 +397,8 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             // Set advertising interval to 20s.
             sc = sl_bt_advertiser_set_timing(advertising_set_handle, // advertising set handle
-                    3200, // min. adv. interval (milliseconds * 1.6)
-                    3200, // max. adv. interval (milliseconds * 1.6)
+                    32000, // min. adv. interval (milliseconds * 1.6)
+                    32000, // max. adv. interval (milliseconds * 1.6)
                     0,   // adv. duration
                     0);  // max. num. adv. events
             app_assert_status(sc);

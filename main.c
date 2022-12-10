@@ -38,7 +38,6 @@
 #else // SL_CATALOG_KERNEL_PRESENT
 #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
-#include "sleep.h"
 
 int main(void)
 {
@@ -50,13 +49,6 @@ int main(void)
   // Initialize the application. For example, create periodic timer(s) or
   // task(s) if the kernel is present.
   app_init();
-
-//  //* Initialize sleep feature
-//  const SLEEP_Init_t sleepConfig = {0};
-//  SLEEP_InitEx(&sleepConfig);
-//
-//  //* Block sleeping any deeper than set sleep state
-//  SLEEP_SleepBlockBegin(sleepEM4);
 
 #if defined(SL_CATALOG_KERNEL_PRESENT)
   // Start the kernel. Task(s) created in app_init() will start running.
