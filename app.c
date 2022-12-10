@@ -77,12 +77,11 @@ typedef struct {
     uint8_t temp_2;
     uint8_t temp_3;
     uint8_t humidity; // 0 to 255 percent relative humidity
-    uint8_t mvolts_LO;
-    uint8_t mvolts_HI; // 0 to 65,535 millivolts
+    uint8_t moisture; // 0 to 255 percent saturation
 } guardener_app_data_t;
 
 // The advertisement data structure
-#define APP_DATA_BYTES  (19)
+#define APP_DATA_BYTES  (18)
 typedef struct {
     // length of the type + flags + payload
     uint8_t adv_len;
@@ -100,6 +99,52 @@ typedef struct {
 } guardener_adv_data_t;
 
 static guardener_adv_data_t guardener_adv_data = {0};
+
+static inline void float_to_bytes(float * f_ptr, uint8_t * payload_data) {
+    union {
+        float f_val;
+        uint8_t bytes[4];
+     } encoder;
+
+    encoder.f_val = *f_ptr;
+    payload_data[0] = encoder.bytes[0];
+    payload_data[1] = encoder.bytes[1];
+    payload_data[2] = encoder.bytes[2];
+    payload_data[3] = encoder.bytes[3];
+}
+
+static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, float _u, float _i, float _t, uint8_t _h, uint8_t _m) {
+    uint8_t _lux[4], _uvi[4], _ir[4], _tem[4];
+    float_to_bytes(&_l, _lux);
+    float_to_bytes(&_u, _uvi);
+    float_to_bytes(&_i, _ir);
+    float_to_bytes(&_t, _tem);
+    int i = 0;
+    for (int j=0; j<4; j++) {
+        adv_data->payload[i++] = _lux[j];
+    }
+    for (int j=0; j<4; j++) {
+        adv_data->payload[i++] = _uvi[j];
+    }
+    for (int j=0; j<4; j++) {
+        adv_data->payload[i++] = _ir[j];
+    }
+    for (int j=0; j<4; j++) {
+        adv_data->payload[i++] = _tem[j];
+    }
+    adv_data->payload[i++] = _h;
+    adv_data->payload[i++] = _m;
+    
+    app_log_warning("Client should receive 0x%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X; Translated to:\n\r"
+                    "lux=%.3f; uvi=%.3f; ir=%.3f; temp=%.3f C; humidity=%d%% RH; moisture=%d%% saturation",
+                    adv_data->payload[0], adv_data->payload[1], adv_data->payload[2], adv_data->payload[3], // lux
+                    adv_data->payload[4], adv_data->payload[5], adv_data->payload[6], adv_data->payload[7], // uvi
+                    adv_data->payload[8], adv_data->payload[9], adv_data->payload[10], adv_data->payload[11], // ir
+                    adv_data->payload[12], adv_data->payload[13], adv_data->payload[14], adv_data->payload[15], // temp
+                    adv_data->payload[16], adv_data->payload[17], // humidity and moisture
+                    _l, _u, _i, _t, _h, _m); // non hex values
+    app_log_append(APP_LOG_NEW_LINE);
+}
 
 moisture_cal_state_t cal_state = CAL_START;
 //extern volatile uint32_t millivolts_when_dry;
@@ -205,10 +250,9 @@ SL_WEAK void app_process_action(void)
 //    //* Re-enable deeper sleeping states
 //    SLEEP_SleepBlockEnd(sleepEM2);
 
-    // Acquire data to be broadcast
-    guardener_app_data_t app_data = {0};
+    /* Acquire data to be broadcast */
 
-    // Start Si1145 Test
+    // Acquire Si1145's Readings
     float lux, uvi, ir;
     if(si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15) != SL_STATUS_OK)
     {
@@ -292,65 +336,10 @@ SL_WEAK void app_process_action(void)
         }
     }
 
-    // TODO: Use the calibrated values to adjust `mvolts` var into a scale of 0 to 100%
-    uint8_t lux_bytes[sizeof(float)];
-    *(float*)(lux_bytes) = lux;
-    app_data.lux_0 = lux_bytes[0];
-    app_data.lux_1 = lux_bytes[1];
-    app_data.lux_2 = lux_bytes[2];
-    app_data.lux_3 = lux_bytes[3];
-    app_log_info("sending lux_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", lux_bytes[0], lux_bytes[1], lux_bytes[2], lux_bytes[3]);
-    float re_lux = *(float*)(lux_bytes);  // convert bytes back to float
-    app_log_info("client should convert lux back to float and get: %.2f", re_lux);
-
-    uint8_t uvi_bytes[sizeof(float)];
-    *(float*)(uvi_bytes) = uvi;
-    app_data.uvi_0 = uvi_bytes[0];
-    app_data.uvi_1 = uvi_bytes[1];
-    app_data.uvi_2 = uvi_bytes[2];
-    app_data.uvi_3 = uvi_bytes[3];
-    app_log_info("sending uvi_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", uvi_bytes[0], uvi_bytes[1], uvi_bytes[2], uvi_bytes[3]);
-    float re_uvi = *(float*)(uvi_bytes);  // convert bytes back to float
-    app_log_info("client should convert uvi back to float and get: %.2f", re_uvi);
-    
-    uint8_t ir_bytes[sizeof(float)];
-    *(float*)(ir_bytes) = ir;
-    app_data.ir_0 = ir_bytes[0];
-    app_data.ir_1 = ir_bytes[1];
-    app_data.ir_2 = ir_bytes[2];
-    app_data.ir_3 = ir_bytes[3];
-    app_log_info("sending ir_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", ir_bytes[0], ir_bytes[1], ir_bytes[2], ir_bytes[3]);
-    float re_ir = *(float*)(ir_bytes);  // convert bytes back to float
-    app_log_info("client should convert ir back to float and get: %.2f", re_ir);
-    
-    uint8_t temp_bytes[sizeof(float)];
-    *(float*)(temp_bytes) = temps;
-    app_data.temp_0 = temp_bytes[0];
-    app_data.temp_1 = temp_bytes[1];
-    app_data.temp_2 = temp_bytes[2];
-    app_data.temp_3 = temp_bytes[3];
-    app_log_info("sending temp_bytes = [ 0x%.2X, 0x%.2X, 0x%.2X, 0x%.2X ]", temp_bytes[0], temp_bytes[1], temp_bytes[2], temp_bytes[3]);
-    float re_temp = *(float*)(temp_bytes);  // convert bytes back to float
-    app_log_info("client should convert uvi back to float and get: %.2f", re_temp);
-    
-    uint8_t humid_temp = (uint8_t)humid;
-    app_data.humidity = humid_temp;
-    app_log_info("client should receive humidity level of %d %% as 0x%.2X", humid_temp, humid_temp);
-
-    uint16_t mv_temp = (uint16_t)mvolts;
-    app_data.mvolts_LO = mv_temp & 0xFF;
-    app_data.mvolts_HI = (mv_temp >> 8) & 0xFF;
-    app_log_info("client should receive moisture level of %d as 0x%.2X 0x%.2X", mv_temp, app_data.mvolts_LO, app_data.mvolts_HI);
-
-    app_log_warning("Client should receive data as 0x%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X\n",
-                    lux_bytes[0], lux_bytes[1], lux_bytes[2], lux_bytes[3],
-                    uvi_bytes[0], uvi_bytes[1], uvi_bytes[2], uvi_bytes[3],
-                    ir_bytes[0], ir_bytes[1], ir_bytes[2], ir_bytes[3],
-                    temp_bytes[0], temp_bytes[1], temp_bytes[2], temp_bytes[3],
-                    humid_temp, mv_temp);
-
     /* Update the custom advertising packet's payload */
-    strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
+    uint8_t hum = 50, moi = 40;
+    update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, hum, moi);
+
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
@@ -413,8 +402,8 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             // Set advertising interval to 20s.
             sc = sl_bt_advertiser_set_timing(advertising_set_handle, // advertising set handle
-                    32000, // min. adv. interval (milliseconds * 1.6)
-                    32000, // max. adv. interval (milliseconds * 1.6)
+                    3200, // min. adv. interval (milliseconds * 1.6)
+                    3200, // max. adv. interval (milliseconds * 1.6)
                     0,   // adv. duration
                     0);  // max. num. adv. events
             app_assert_status(sc);
@@ -435,8 +424,8 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             // 1+2+19 bytes for type, company ID, and the payload
             guardener_adv_data.adv_len = 22;
             guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
-            guardener_adv_data.mfr_id_LO = 0xBABE & 0xFF;
-            guardener_adv_data.mfr_id_HI = (0xBABE >> 8) & 0xFF;
+            guardener_adv_data.mfr_id_LO = 0xBA;
+            guardener_adv_data.mfr_id_HI = 0xBE;
 
             guardener_app_data_t app_data = {
                 .lux_0 = 0x11,
@@ -456,8 +445,7 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
                 .temp_2 = 0xFF,
                 .temp_3 = 0x00,
                 .humidity = 0x11,
-                .mvolts_LO = 0x22,
-                .mvolts_HI = 0x33
+                .moisture = 0x22
             };
             strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
 

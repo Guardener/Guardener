@@ -93,7 +93,7 @@
 
 // <e APP_LOG_LEVEL_FILTER_ENABLE> Threshold filter
 // <i> Enable simple filter for log levels
-#define APP_LOG_LEVEL_FILTER_ENABLE            0
+#define APP_LOG_LEVEL_FILTER_ENABLE            1
 
 // <o APP_LOG_LEVEL_FILTER_THRESHOLD> Threshold
 // <APP_LOG_LEVEL_DEBUG=> DEBUG
@@ -102,7 +102,7 @@
 // <APP_LOG_LEVEL_ERROR=> ERROR
 // <APP_LOG_LEVEL_CRITICAL=> CRITICAL
 // <i> Default: DEBUG
-#define APP_LOG_LEVEL_FILTER_THRESHOLD              APP_LOG_LEVEL_DEBUG
+#define APP_LOG_LEVEL_FILTER_THRESHOLD              APP_LOG_LEVEL_INFO
 
 // </e>
 
