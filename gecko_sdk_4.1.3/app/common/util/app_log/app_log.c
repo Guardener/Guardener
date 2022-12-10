@@ -201,6 +201,7 @@ SL_WEAK void _app_log_time()
   uint32_t time_ms = (uint32_t)(sl_sleeptimer_get_tick_count64()
                                 * 1000
                                 / sl_sleeptimer_get_timer_frequency());
+  time_ms = time_ms; // appease compiler if log is turned off
   app_log_append(APP_LOG_TIME_FORMAT APP_LOG_SEPARATOR,
                  (time_ms / 3600000),
                  (time_ms / 60000) % 60,
