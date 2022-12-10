@@ -47,9 +47,13 @@ static sl_pwm_instance_t pwm_instance = {0};
 static ADC_TypeDef *adc_instance = 0;
 static volatile uint32_t sample;
 static volatile uint32_t millivolts;
+moisture_cal_state_t ms_cal_state;
 static float scaling_factor;
-//static uint32_t scaling_diff;
 const float MAX_VAL = 100.0;
+
+// For moisture cal
+static volatile uint32_t millivolts_when_dry = 2200;
+static volatile uint32_t millivolts_when_wet = 1100;
 
 //sl_status_t guardener_sine_wave_init(moisture_sensor_cfg_t* cfg)
 //{
@@ -91,7 +95,7 @@ uint32_t ms_get_millivolts()
 {
     if(!moisture_sensor_initialized)
     {
-        DLOGRET("Moisture Sensor is not yet initialized");
+        app_log_error("Moisture Sensor is not yet initialized");
         return -1;
     }
 
@@ -118,16 +122,37 @@ uint32_t ms_get_millivolts()
 
     if(!moisture_sensor_calibrated)
     {
-        DLOGRET("WARNING: Moisture Sensor is not yet calibrated");
-
-    }
-    else
-    {
-        // manipulate millivolts to nice scale
-        millivolts = (millivolts - millivolts_when_wet) * scaling_factor;
+        app_log_warning("Moisture Sensor is not yet calibrated");
     }
 
     return millivolts;
+}
+
+uint8_t ms_get_moisture_lvl(uint32_t millivolts)
+{
+    uint8_t level;
+    if(moisture_sensor_calibrated)
+    {
+        if (millivolts > millivolts_when_wet)
+        {
+            level = (millivolts - millivolts_when_wet) * scaling_factor;
+        }
+        else
+        {
+            level = 0;
+        }
+
+        if(level > 100)
+        {
+            level = 100;
+        }
+    }
+    else
+    {
+        app_log_warning("Moisture Sensor is not yet calibrated");
+    }
+
+    return level;
 }
 
 sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
@@ -162,56 +187,49 @@ sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
 
 moisture_cal_state_t next_cal_state(moisture_cal_state_t cal_state)
 {
-    //sl_status_t sc = SL_STATUS_OK;
     moisture_cal_state_t ret_state = cal_state;
-    //moisture_sensor_cfg_
-    if(cal_state == CAL_START)
+    if(cal_state == CAL_DRY)
     {
-        DLOGRET("CAL_START"); // \n\t INSTRUCTIONS: please have in a DRY spot");
         moisture_sensor_calibrated = false;
-        //increment the state... is this a dead state tho do we need it??
-        ret_state++;
-    }
-    else if(cal_state == CAL_DRY)
-    {
-        DLOGRET("CAL_DRY"); // Moisture Sensor DRY: %lu mV  \n\t INSTRUCTIONS: Place finger(s) on senor, or place in a cup of water", millivolts_when_dry);
+        app_log_debug("CAL_DRY:\n Moisture Sensor DRY: %lu mV  \n\t INSTRUCTIONS: Place finger(s) on senor, or place in a cup of water, then LONG PRESS Interactive Button to Continue", millivolts_when_dry);
         millivolts_when_dry = ms_get_millivolts();
-        ret_state++;
+        ret_state = CAL_WET;
     }
     else if(cal_state == CAL_WET)
     {
-        DLOGRET("CAL_WET"); //: Moisture Sensor WET: %lu mV, \n\t INSTRUCTIONS: LONG PRESS Interactive Button to Continue", millivolts_when_wet);
+        app_log_debug("CAL_WET:\n Moisture Sensor WET: %lu mV, \n\t INSTRUCTIONS: Should go to CAL_OK", millivolts_when_wet);
         millivolts_when_wet = ms_get_millivolts();
-        scaling_factor = normalize_moisture(MAX_VAL, millivolts_when_dry, millivolts_when_wet);
-        ret_state++;
+        scaling_factor = normalize_moisture(millivolts_when_dry, millivolts_when_wet);
+        ret_state = CAL_OK;
     }
     else if(cal_state == CAL_OK)
     {
-        DLOGRET("CAL_OK"); // Moisture Sensor OK");
-        ret_state = CAL_START;
-        //ret = SL_STATUS_NOT_SUPPORTED;
+        app_log_debug("Leaving CAL_OK\n"); // Moisture Sensor OK");
+        ret_state = CAL_DRY;
     }
     else
-        cal_state = CAL_START;
-    /* TODO consider faults later
-     else if(moisture_sensor_data == CAL_NOT_OK)
-     {
-     cal_state = CAL_NOT_OK;
-     moisture_sensor_calibrated = false;
-     }
-     */
+    {
+        app_log_debug("CAL Other state.... going back to DRY\n"); // Moisture Sensor OK");
+        cal_state = CAL_DRY;
+    }
 
+    ms_cal_state = ret_state;
     return ret_state;
 }
 
-float normalize_moisture(float max_val, uint32_t dry, uint32_t wet)
+void moisture_get_cal_state(moisture_cal_state_t* _ext_cal_state)
+{
+  *_ext_cal_state = ms_cal_state;
+}
+
+float normalize_moisture(uint32_t dry, uint32_t wet)
 {
     uint32_t scaling_diff;
     float ret_moisture = 0;
-    //
+
     if(wet > dry)
     {
-        DLOGRET("Moisture Sensor WET is more than DRY?: %lu %lu mV", dry, wet);
+        app_log_debug("Moisture Sensor WET is more than DRY? Divider scaling_diff set to 1: %lu %lu mV", dry, wet);
         scaling_diff = 1;
     }
     else
@@ -219,12 +237,11 @@ float normalize_moisture(float max_val, uint32_t dry, uint32_t wet)
         scaling_diff = dry - wet;
     }
 
-    ret_moisture = max_val * 0.99 / scaling_diff;
+    ret_moisture = (dry * 1.0) / scaling_diff;
 
-    DLOGRET("Moisture Sensor DRY: %lu mV", dry);
-    DLOGRET("Moisture Sensor WET: %lu mV", wet);
+    app_log_debug("Moisture Sensor DRY: %lu mV", dry);
+    app_log_debug("Moisture Sensor WET: %lu mV", wet);
     moisture_sensor_calibrated = true;
 
     return ret_moisture;
 }
-

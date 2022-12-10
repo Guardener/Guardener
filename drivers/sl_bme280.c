@@ -19,6 +19,7 @@
 #include "sl_sleeptimer.h"
 #include "app_log.h"
 #include <stdbool.h>
+#include <math.h>
 
 #ifdef app_log_debug
 #define DLOGRET(...)                                                                                                   \
@@ -33,6 +34,10 @@
 #define app_log_error(...) do { /* nop */ } while (0)
 #define app_log_nl(...) do { /* nop */ } while (0)
 #endif
+
+// For relative humidity adjusting/calibrating
+#define OFFSET 58
+#define SCALING 0.00454
 
 static bool bme280_initialized_s = false, bme280_asleep = false;
 static struct bme280_dev dev_s = {0};
@@ -111,6 +116,22 @@ int8_t sl_bme280_write_register(uint8_t reg_addr, const uint8_t *data, uint32_t 
     }
 
     return ret;
+}
+
+uint8_t sl_bme280_convert_bme2RH(float humi)
+{
+    uint8_t scaled_humid = -1; // not a possible return value. Acts as an error
+
+    // Amber: I came up with (0.13303 + 0.02017 x) / 0.653182 - 0.0612587 x)
+    app_log_debug("RAW DATA BME280 acquired: %0.2lf", humi);
+    app_log_debug("OFFSET/SCALED DATA BME280 acquired: %0.2lf", (humi - OFFSET) * 1000);
+
+    const float a = 0.5556, b = 1.85;
+    scaled_humid = (a * log( b - (humi - OFFSET) )) * 100;
+
+    app_log_debug("BME280 humidity scaled to %d%% RH", scaled_humid);
+
+    return (scaled_humid > 100) ? -1 /* failure */ : scaled_humid;
 }
 
 sl_status_t sl_bme280_force_get_readings(float *temp, float* pres, float* humi)

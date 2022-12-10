@@ -146,9 +146,8 @@ static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, f
     app_log_append(APP_LOG_NEW_LINE);
 }
 
-moisture_cal_state_t cal_state = CAL_START;
-//extern volatile uint32_t millivolts_when_dry;
-//extern volatile uint32_t millivolts_when_wet;
+// Moisture calibration state flag
+moisture_cal_state_t curr_cal_state = CAL_DRY;
 
 // Button state.
 static volatile bool usr_btn_pressed = false, interrupt_triggered = false, calibrating = false;
@@ -276,17 +275,31 @@ SL_WEAK void app_process_action(void)
         app_log_info("temps=%0.2lf C, humid=%0.2lf %%", temps, humid);
     }
 
-    // Acquire Moisture Sensor's Readings
+    uint8_t humid_lvl = sl_bme280_convert_bme2RH(humid);
+    if (humid_lvl == (uint8_t)-1)
+    {
+        app_log_error("Failed to scale BME280's humidity reading. Got \"%d\"", humid_lvl);
+    }
+
+    // Acquire Moisture Sensor's millivolt Readings
     uint32_t mvolts = ms_get_millivolts();
     if(mvolts == (uint32_t)-1)
     {
         app_log_error("Failed to acquire moisture sensor value \r\n");
         while(true); // crash here
     }
-    else if(!calibrating)
+    else if((!calibrating) && (curr_cal_state != CAL_OK))
     {
         // if calibrated, can be % instead of mV
-        app_log_info("mvolts=%lu mV", mvolts);
+        app_log_info("moisture mvolts=%lu mV", mvolts);
+    }
+    
+    // Acquire Moisture Sensor's Percent Saturation Readings
+    moisture_get_cal_state(&curr_cal_state);
+    uint8_t moisture_lvl = ms_get_moisture_lvl(mvolts);
+    if(curr_cal_state == CAL_OK)
+    {
+        app_log_info("moisture saturation level= %lu %%", moisture_lvl);
     }
 
     if(interrupt_triggered)
@@ -295,17 +308,16 @@ SL_WEAK void app_process_action(void)
         if(usr_btn_pressed == true)
         {
             calibrating = true; // Stops app log prints during calibration process
-            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n", pressed_time,
-                         released_time);
+            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n",
+                         pressed_time, released_time);
         }
         else if(usr_btn_pressed == false)
         {
             app_log_info("User Interface Button has been released");
             if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
             {
-                app_log_info(
-                        "                                        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
-                        released_time - pressed_time, released_time, pressed_time);
+                app_log_info("        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
+                             released_time - pressed_time, released_time, pressed_time);
             }
             else if(released_time - pressed_time >= LONG_PRESS)
             {
@@ -314,31 +326,20 @@ SL_WEAK void app_process_action(void)
                 // Long press again to go to wet, set up and then press again, the
                 // cal procedure will call the function to normalize
 
-                cal_state = next_cal_state(cal_state);
+                curr_cal_state = next_cal_state(curr_cal_state);
 
-                //else if(cfg->moisture_cal_state == CAL_NOT_OK)
-                //  next_cal_state(&ms_cfg);
-
-                app_log_info("calibration state is at %u", cal_state);
-                app_log_info(
-                        "                                        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
-                        released_time - pressed_time, released_time, pressed_time);
+                app_log_info("calibration state is at %u", curr_cal_state);
+                app_log_info("        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
+                             released_time - pressed_time, released_time, pressed_time);
 
                 // Determine if calibration is done; return print statements if it is
-                calibrating = (cal_state == CAL_OK) ? false : true;
+                calibrating = (curr_cal_state == CAL_OK) ? false : true;
             }
-
-            //app_log_info("User Interface Button has been released, Pressed time: %d released time:%d \r\n", pressed_time, released_time);
-
-            //%d.%d-b%d\n", evt->data.evt_system_boot.major,
-            //        evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
-            //        evt->data.evt_system_boot.build);
         }
     }
 
     /* Update the custom advertising packet's payload */
-    uint8_t hum = 50, moi = 40;
-    update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, hum, moi);
+    update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, humid_lvl, moisture_lvl);
 
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {

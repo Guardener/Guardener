@@ -116,6 +116,11 @@ sl_status_t sl_bme280_put_to_sleep(void);
 */
 sl_status_t sl_bme280_wake_up_device(void);
 
+/*!
+ * @brief Convert BME280's float humidity reading to 0-100 % RH
+ */
+uint8_t sl_bme280_convert_bme2RH(float humi);
+
 #ifdef __cpluspluc
 }
 #endif
