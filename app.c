@@ -344,15 +344,15 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
 
-//    uint8_t humid_lvl = sl_bme280_convert_bme2RH(humid);
-//    if (humid_lvl == (uint8_t)-1)
-//    {
-//        app_log_error("Failed to scale BME280's humidity reading. Got \"%d\"", humid_lvl);
-//        app_log_nl();
-//    }
+    uint8_t humid_lvl = sl_bme280_convert_bme2RH(humid);
+    if (humid_lvl == (uint8_t)-1)
+    {
+        app_log_error("Failed to scale BME280's humidity reading. Got \"%d\"", humid_lvl);
+        app_log_nl();
+    }
 
-    // CIP: BME280 reads an extra 22.36 %RH for me, subtracting it from the reading
-    uint8_t humid_lvl = (uint8_t)((float)humid - (float)22.36);
+//    // CIP: BME280 reads an extra 22.36 %RH for me, subtracting it from the reading
+//    uint8_t humid_lvl = (uint8_t)((float)humid - (float)22.36);
 
     // Acquire Moisture Sensor's millivolt Readings
     uint32_t mvolts = ms_get_millivolts();
