@@ -16,6 +16,7 @@
 
 static sl_status_t ret = SL_STATUS_OK;
 #ifdef app_log_debug
+#if !APP_LOG_LEVEL_MASK_DEBUG
 #define DLOGRET(...)                                                                                                   \
     do {                                                                                                               \
         app_log_debug(__VA_ARGS__);                                                                                    \
@@ -24,6 +25,9 @@ static sl_status_t ret = SL_STATUS_OK;
         } \
         app_log_nl();                                                                                                  \
     } while (0)
+#else
+#define DLOGRET(...) do { /* nop */ } while (0)
+#endif
 #else
 #define DLOGRET(...) do { /* nop */ } while (0)
 #define app_log_debug(...) do { /* nop */ } while (0)
@@ -204,25 +208,32 @@ sl_status_t si1145_get_lux_uvi_ir(float *_lux, float *_uvi, float *_ir, int iter
         // Error handling
         switch (data[0]) {
         case SI1145_ERRRSP_INVALID_SETTING:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_INVALID_SETTING\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_INVALID_SETTING", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_PS1_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS1_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS1_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_PS2_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS2_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS2_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_PS3_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS3_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_PS3_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_ALS_VIS_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_ALS_VIS_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_ALS_VIS_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_ALS_IR_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         case SI1145_ERRRSP_AUX_ADC_OVERFLOW:
-            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_AUX_ADC_OVERFLOW\n", data[0]);
+            app_log_error("Si1145 error (0x%X): SI1145_ERRRSP_AUX_ADC_OVERFLOW", data[0]);
+            app_log_nl();
             break;
         default:
             if (ret != SL_STATUS_OK) {

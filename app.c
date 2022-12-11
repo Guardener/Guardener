@@ -143,7 +143,7 @@ static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, f
                     adv_data->payload[12], adv_data->payload[13], adv_data->payload[14], adv_data->payload[15], // temp
                     adv_data->payload[16], adv_data->payload[17], // humidity and moisture
                     _l, _u, _i, _t, _h, _m); // non hex values
-    app_log_append(APP_LOG_NEW_LINE);
+    app_log_nl();
 }
 
 // Moisture calibration state flag
@@ -167,7 +167,8 @@ uint32_t released_time;
 SL_WEAK void app_init(void)
 {
     sl_status_t sc;
-    app_log_info("Initializing Application Code \r\n");
+    app_log_info("Initializing Application Code");
+    app_log_nl();
 
     // Init Si1145
     si1145_cfg_t init = { // @formatter:off
@@ -181,7 +182,8 @@ SL_WEAK void app_init(void)
     sc = si1145_init(init);
     if(sc != SL_STATUS_OK)
     {
-        app_log_error("Failed to initialize the Si1145 sensor\r\n");
+        app_log_error("Failed to initialize the Si1145 sensor");
+        app_log_nl();
         while(true); // crash here
     }
 
@@ -196,7 +198,8 @@ SL_WEAK void app_init(void)
     sc = sl_bme280_init(SL_I2CSPM_BME280_PERIPHERAL, init_cfg, BME280_FORCED_MODE);
     if(sc != SL_STATUS_OK)
     {
-        app_log_error("Failed to initialize the BME280 sensor\r\n");
+        app_log_error("Failed to initialize the BME280 sensor");
+        app_log_nl();
         while(true); // crash here
     }
 
@@ -318,7 +321,8 @@ SL_WEAK void app_process_action(void)
     float lux, uvi, ir;
     if(si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15) != SL_STATUS_OK)
     {
-        app_log_error("Failed to acquire lux, uvi, and ir readings \r\n");
+        app_log_error("Failed to acquire lux, uvi, and ir readings");
+        app_log_nl();
         while(true); // crash here
     }
     else if(!calibrating)
@@ -330,31 +334,36 @@ SL_WEAK void app_process_action(void)
     float temps, humid;
     if(sl_bme280_force_get_readings(&temps, NULL, &humid) != SL_STATUS_OK)
     {
-        app_log_error("Failed to acquire temperature, pressure, and humidity readings \r\n");
+        app_log_error("Failed to acquire temperature, pressure, and humidity readings");
+        app_log_nl();
         while(true); // crash here
     }
     else if(!calibrating)
     {
         app_log_info("temps=%0.2lf C, humid=%0.2lf %%", temps, humid);
+        app_log_nl();
     }
 
     uint8_t humid_lvl = sl_bme280_convert_bme2RH(humid);
     if (humid_lvl == (uint8_t)-1)
     {
         app_log_error("Failed to scale BME280's humidity reading. Got \"%d\"", humid_lvl);
+        app_log_nl();
     }
 
     // Acquire Moisture Sensor's millivolt Readings
     uint32_t mvolts = ms_get_millivolts();
     if(mvolts == (uint32_t)-1)
     {
-        app_log_error("Failed to acquire moisture sensor value \r\n");
+        app_log_error("Failed to acquire moisture sensor value");
+        app_log_nl();
         while(true); // crash here
     }
     else if((!calibrating) && (curr_cal_state != CAL_OK))
     {
         // if calibrated, can be % instead of mV
         app_log_info("moisture mvolts=%lu mV", mvolts);
+        app_log_nl();
     }
     
     // Acquire Moisture Sensor's Percent Saturation Readings
@@ -363,6 +372,7 @@ SL_WEAK void app_process_action(void)
     if(curr_cal_state == CAL_OK)
     {
         app_log_info("moisture saturation level= %lu %%", moisture_lvl);
+        app_log_nl();
     }
 
     if(interrupt_triggered)
@@ -371,16 +381,18 @@ SL_WEAK void app_process_action(void)
         if(usr_btn_pressed == true)
         {
             calibrating = true; // Stops app log prints during calibration process
-            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d \r\n",
+            app_log_info("User Interface Button has been pressed, Pressed time: %d released time:%d",
                          pressed_time, released_time);
+            app_log_nl();
         }
         else if(usr_btn_pressed == false)
         {
             app_log_info("User Interface Button has been released");
             if(released_time - pressed_time >= SHORT_PRESS && released_time - pressed_time < LONG_PRESS)
             {
-                app_log_info("        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
+                app_log_info("        ...after a SHORT PRESS, Interval of Pressed time: \t%d = (%d - %d)",
                              released_time - pressed_time, released_time, pressed_time);
+                app_log_nl();
             }
             else if(released_time - pressed_time >= LONG_PRESS)
             {
@@ -392,8 +404,10 @@ SL_WEAK void app_process_action(void)
                 curr_cal_state = next_cal_state(curr_cal_state);
 
                 app_log_info("calibration state is at %u", curr_cal_state);
+                app_log_nl();
                 app_log_info("        ...after a LONG PRESS, Interval of Pressed time: \t%d = (%d - %d) \r\n",
                              released_time - pressed_time, released_time, pressed_time);
+                app_log_nl();
 
                 // Determine if calibration is done; return print statements if it is
                 calibrating = (curr_cal_state == CAL_OK) ? false : true;
@@ -403,10 +417,10 @@ SL_WEAK void app_process_action(void)
 
     /* Update the custom advertising packet's payload */
     update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, humid_lvl, moisture_lvl);
-
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
+        app_log_nl();
     }
 
     /**
@@ -450,17 +464,19 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
         // Do not call any stack command before receiving this boot event!
         case sl_bt_evt_system_boot_id:
             // Print boot message.
-            app_log_info("Bluetooth stack booted: v%d.%d.%d-b%d\n", evt->data.evt_system_boot.major,
+            app_log_info("Bluetooth stack booted: v%d.%d.%d-b%d", evt->data.evt_system_boot.major,
                             evt->data.evt_system_boot.minor, evt->data.evt_system_boot.patch,
                             evt->data.evt_system_boot.build);
+            app_log_nl();
 
             // Extract unique ID from BT Address.
             sc = sl_bt_system_get_identity_address(&address, &address_type);
             app_assert_status(sc);
 
-            app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X",
                             address_type ? "static random" : "public device", address.addr[5], address.addr[4],
                             address.addr[3], address.addr[2], address.addr[1], address.addr[0]);
+            app_log_nl();
 
             // Pad and reverse unique ID to get System ID.
             system_id[0] = address.addr[5];
@@ -492,13 +508,15 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
             app_assert_status(sc);
 
-            app_log_info("Started advertising\n");
+            app_log_info("Started advertising");
+            app_log_nl();
             break;
 
             // -------------------------------
             // This event indicates that a new connection was opened.
         case sl_bt_evt_connection_opened_id:
-            app_log_info("Connection opened\n");
+            app_log_info("Connection opened");
+            app_log_nl();
 
 #ifdef SL_CATALOG_BLUETOOTH_FEATURE_POWER_CONTROL_PRESENT
             // Set remote connection power reporting - needed for Power Control
@@ -509,17 +527,10 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
 
             break;
 
-        case sl_bt_evt_system_awake_id:
-            // get all readings
-            // prepare packet
-            // send packet here or?
-            app_log_info("Oh hi I'm awake now\n");
-            break;
-
-            // -------------------------------
-            // This event indicates that a connection was closed.
+        // This event indicates that a connection was closed.
         case sl_bt_evt_connection_closed_id:
-            app_log_info("Connection closed\n");
+            app_log_info("Connection closed");
+            app_log_nl();
 
             // Generate data for advertising
             sc = sl_bt_legacy_advertiser_generate_data(advertising_set_handle, sl_bt_advertiser_general_discoverable);
@@ -528,12 +539,14 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             // Restart advertising after client has disconnected.
             sc = sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable);
             app_assert_status(sc);
-            app_log_info("Started advertising\n");
+            app_log_info("Started advertising");
+            app_log_nl();
             break;
 
         // Default event handler.
         default:
             app_log_info("event with no handler: 0x%X", event_id);
+            app_log_nl();
             break;
     }
 }
@@ -593,8 +606,9 @@ void hello(sl_cli_command_arg_t* arguments)
     uint8_t address_type;
     sl_status_t sc = sl_bt_system_get_identity_address(&address, &address_type);
     app_assert_status(sc);
-    app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X\n",
+    app_log_info("Bluetooth %s address: %02X:%02X:%02X:%02X:%02X:%02X",
                  address_type ? "static random" : "public device", address.addr[5], address.addr[4], address.addr[3],
                  address.addr[2], address.addr[1], address.addr[0]);
+    app_log_nl();
 }
 #endif // SL_CATALOG_CLI_PRESENT

@@ -96,6 +96,7 @@ uint32_t ms_get_millivolts()
     if(!moisture_sensor_initialized)
     {
         app_log_error("Moisture Sensor is not yet initialized");
+        app_log_nl();
         return -1;
     }
 
@@ -123,6 +124,7 @@ uint32_t ms_get_millivolts()
     if(!moisture_sensor_calibrated)
     {
         app_log_warning("Moisture Sensor is not yet calibrated");
+        app_log_nl();
     }
 
     return millivolts;
@@ -150,9 +152,10 @@ uint8_t ms_get_moisture_lvl(uint32_t millivolts)
     else
     {
         app_log_warning("Moisture Sensor is not yet calibrated");
+        app_log_nl();
     }
 
-    return level;
+    return 100-level;
 }
 
 sl_status_t init_moisture_sensor(moisture_sensor_cfg_t* cfg)
@@ -191,25 +194,37 @@ moisture_cal_state_t next_cal_state(moisture_cal_state_t cal_state)
     if(cal_state == CAL_DRY)
     {
         moisture_sensor_calibrated = false;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("CAL_DRY:\n Moisture Sensor DRY: %lu mV  \n\t INSTRUCTIONS: Place finger(s) on senor, or place in a cup of water, then LONG PRESS Interactive Button to Continue", millivolts_when_dry);
+        app_log_nl();
+        #endif
         millivolts_when_dry = ms_get_millivolts();
         ret_state = CAL_WET;
     }
     else if(cal_state == CAL_WET)
     {
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("CAL_WET:\n Moisture Sensor WET: %lu mV, \n\t INSTRUCTIONS: Should go to CAL_OK", millivolts_when_wet);
+        app_log_nl();
+        #endif
         millivolts_when_wet = ms_get_millivolts();
         scaling_factor = normalize_moisture(millivolts_when_dry, millivolts_when_wet);
         ret_state = CAL_OK;
     }
     else if(cal_state == CAL_OK)
     {
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("Leaving CAL_OK\n"); // Moisture Sensor OK");
+        app_log_nl();
+        #endif
         ret_state = CAL_DRY;
     }
     else
     {
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("CAL Other state.... going back to DRY\n"); // Moisture Sensor OK");
+        app_log_nl();
+        #endif
         cal_state = CAL_DRY;
     }
 
@@ -229,7 +244,10 @@ float normalize_moisture(uint32_t dry, uint32_t wet)
 
     if(wet > dry)
     {
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("Moisture Sensor WET is more than DRY? Divider scaling_diff set to 1: %lu %lu mV", dry, wet);
+        app_log_nl();
+        #endif
         scaling_diff = 1;
     }
     else
@@ -239,8 +257,14 @@ float normalize_moisture(uint32_t dry, uint32_t wet)
 
     ret_moisture = (dry * 1.0) / scaling_diff;
 
+    #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("Moisture Sensor DRY: %lu mV", dry);
+    app_log_nl();
+    #endif
+    #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("Moisture Sensor WET: %lu mV", wet);
+    app_log_nl();
+    #endif
     moisture_sensor_calibrated = true;
 
     return ret_moisture;

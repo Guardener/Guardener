@@ -123,13 +123,22 @@ uint8_t sl_bme280_convert_bme2RH(float humi)
     uint8_t scaled_humid = -1; // not a possible return value. Acts as an error
 
     // Amber: I came up with (0.13303 + 0.02017 x) / 0.653182 - 0.0612587 x)
+    #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("RAW DATA BME280 acquired: %0.2lf", humi);
+    app_log_nl();
+    #endif
+    #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("OFFSET/SCALED DATA BME280 acquired: %0.2lf", (humi - OFFSET) * 1000);
+    app_log_nl();
+    #endif
 
     const float a = 0.5556, b = 1.85;
     scaled_humid = (a * log( b - (humi - OFFSET) )) * 100;
 
+    #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("BME280 humidity scaled to %d%% RH", scaled_humid);
+    app_log_nl();
+    #endif
 
     return (scaled_humid > 100) ? -1 /* failure */ : scaled_humid;
 }
@@ -162,47 +171,75 @@ sl_status_t sl_bme280_force_get_readings(float *temp, float* pres, float* humi)
     int8_t ret = bme280_get_sensor_data(BME280_ALL, &comp_data, &dev_s);
     if (ret != BME280_OK) {
         app_log_error("Failed to get sensor data (code %+d).", ret);
+        app_log_nl();
         return SL_STATUS_FAIL;
     }
 
 #ifdef BME280_FLOAT_ENABLE
     if (temp != NULL) {
         *temp = (float)comp_data.temperature;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf deg C", *temp);
+        app_log_nl();
+        #endif
     }
     if (pres != NULL) {
         *pres = (float)0.01 * comp_data.pressure;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf hPa", *pres);
+        app_log_nl();
+        #endif
     }
     if (humi != NULL) {
         *humi = (float)comp_data.humidity;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf%%", *humi);
+        app_log_nl();
+        #endif
     }
 #elif BME280_64BIT_ENABLE
     if (temp != NULL) {
         *temp = (float)0.01f * comp_data.temperature;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf deg C", *temp);
+        app_log_nl();
+        #endif
     }
     if (pres != NULL) {
         *pres = (float)0.0001f * comp_data.pressure;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf hPa", *pres);
+        app_log_nl();
+        #endif
     }
     if (humi != NULL) {
         *humi = (float)1.0f / 1024.0f * comp_data.humidity;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf%%", *humi);
+        app_log_nl();
+        #endif
     }
 #else
     if (temp != NULL) {
         *temp = (float)0.01f * comp_data.temperature;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf deg C", *temp);
+        app_log_nl();
+        #endif
     }
     if (pres != NULL) {
         *pres = (float)0.01f * comp_data.pressure;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf hPa", *pres);
+        app_log_nl();
+        #endif
     }
     if (humi != NULL) {
         *humi = (float)1.0f / 1024.0f * comp_data.humidity;
+        #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf%%", *humi);
+        app_log_nl();
+        #endif
     }
 #endif
 
@@ -292,12 +329,14 @@ sl_status_t sl_bme280_init(sl_i2cspm_t* i2cspm, struct bme280_settings cfg, uint
     ret = bme280_set_sensor_settings(settings_sel, &dev_s);
     if (ret != BME280_OK) {
         app_log_error("Failed to set sensor settings (code %+d).", ret);
+        app_log_nl();
         return SL_STATUS_NOT_INITIALIZED;
     }
 
     ret = bme280_set_sensor_mode(op_mode_s, &dev_s);
     if (ret != BME280_OK) {
         app_log_error("Failed to set sensor mode (code %+d).", ret);
+        app_log_nl();
         return SL_STATUS_INVALID_MODE;
     }
 
