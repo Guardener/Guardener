@@ -231,6 +231,70 @@ SL_WEAK void app_init(void)
     init_moisture_sensor(&ms_cfg);
 }
 
+static volatile bool once = true;
+static inline void guardener_init_ble_advertiser()
+{
+    // Set advertising interval to 20s.
+    sl_status_t sc = sc = sl_bt_advertiser_set_timing(advertising_set_handle, // advertising set handle
+                                     32000, // min. adv. interval (milliseconds * 1.6)
+                                     32000, // max. adv. interval (milliseconds * 1.6)
+                                     0,   // adv. duration
+                                     1);  // max. num. adv. events
+    app_assert_status(sc);
+
+    // Advertise on all channels
+    sc = sl_bt_advertiser_set_channel_map(advertising_set_handle, 7 /*All channels*/);
+    app_assert_status(sc);
+
+    if (once)
+    {
+        // Save some power by limiting the broadcast power
+        sc = sl_bt_system_halt(1);
+        app_assert_status(sc);
+        sc = sl_bt_system_set_tx_power(-30, 0, NULL, NULL);
+        app_assert_status(sc);
+        sc = sl_bt_system_halt(0);
+        app_assert_status(sc);
+        once = false;
+    }
+
+    /* Construct the advertisement packet with our desired initial data */
+    // 1+2+19 bytes for type, company ID, and the payload
+    guardener_adv_data.adv_len = 22;
+    guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
+    guardener_adv_data.mfr_id_LO = 0xBA;
+    guardener_adv_data.mfr_id_HI = 0xBE;
+
+    guardener_app_data_t app_data = {
+        .lux_0 = 0x11,
+        .lux_1 = 0x22,
+        .lux_2 = 0x33,
+        .lux_3 = 0x44,
+        .uvi_0 = 0x55,
+        .uvi_1 = 0x66,
+        .uvi_2 = 0x77,
+        .uvi_3 = 0x88,
+        .ir_0 = 0x99,
+        .ir_1 = 0xAA,
+        .ir_2 = 0xBB,
+        .ir_3 = 0xCC,
+        .temp_0 = 0xDD,
+        .temp_1 = 0xEE,
+        .temp_2 = 0xFF,
+        .temp_3 = 0x00,
+        .humidity = 0x11,
+        .moisture = 0x22
+    };
+    strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
+
+    // total length of advertising data
+    guardener_adv_data.data_size = 1 + guardener_adv_data.adv_len;
+
+    // Provide the BT stack the constructed advertisement packet
+    sc = sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data);
+    app_assert_status(sc);
+}
+
 #ifndef SL_CATALOG_KERNEL_PRESENT
 /**************************************************************************//**
  * Application Process Action.
@@ -243,7 +307,12 @@ SL_WEAK void app_process_action(void)
         return;
     }
 
-    /* Acquire data to be broadcast */
+    // reinitialize the advertiser
+    guardener_init_ble_advertiser();
+
+    /**
+     * Acquire all the data to be broadcast
+     */
 
     // Acquire Si1145's Readings
     float lux, uvi, ir;
@@ -340,6 +409,21 @@ SL_WEAK void app_process_action(void)
         app_log_error("Failed to set advertising data");
     }
 
+    /**
+     * Wait 5 minutes - time it takes to collect the data before allowing the
+     * application loop to trigger sending another advertisement packet.
+     */
+//    sl_sleeptimer_delay_millisecond(5000); // test wait
+    for (int i = 0; i<4; i++)
+    {
+        sl_sleeptimer_delay_millisecond(65535 /*max sleep interval*/);
+    }
+    sl_sleeptimer_delay_millisecond(37860 /*remaining amount of 300000 ms*/);
+
+
+    // start the advertisement with the new packet
+    app_assert_status(sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable));
+
     return;
 }
 #endif
@@ -395,61 +479,8 @@ void sl_bt_on_event(sl_bt_msg_t* evt)
             sc = sl_bt_advertiser_create_set(&advertising_set_handle);
             app_assert_status(sc);
 
-            // Set advertising interval to 20s.
-            sc = sl_bt_advertiser_set_timing(advertising_set_handle, // advertising set handle
-                    32000, // min. adv. interval (milliseconds * 1.6)
-                    32000, // max. adv. interval (milliseconds * 1.6)
-                    0,   // adv. duration
-                    0);  // max. num. adv. events
-            app_assert_status(sc);
-
-            // Advertise on all channels
-            sc = sl_bt_advertiser_set_channel_map(advertising_set_handle, 7 /*All channels*/);
-            app_assert_status(sc);
-
-            // Save some power by limiting the broadcast power
-            sc = sl_bt_system_halt(1);
-            app_assert_status(sc);
-            sc = sl_bt_system_set_tx_power(-30, 0, NULL, NULL);
-            app_assert_status(sc);
-            sc = sl_bt_system_halt(0);
-            app_assert_status(sc);
-
-            /* Construct the advertisement packet with our desired initial data */
-            // 1+2+19 bytes for type, company ID, and the payload
-            guardener_adv_data.adv_len = 22;
-            guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
-            guardener_adv_data.mfr_id_LO = 0xBA;
-            guardener_adv_data.mfr_id_HI = 0xBE;
-
-            guardener_app_data_t app_data = {
-                .lux_0 = 0x11,
-                .lux_1 = 0x22,
-                .lux_2 = 0x33,
-                .lux_3 = 0x44,
-                .uvi_0 = 0x55,
-                .uvi_1 = 0x66,
-                .uvi_2 = 0x77,
-                .uvi_3 = 0x88,
-                .ir_0 = 0x99,
-                .ir_1 = 0xAA,
-                .ir_2 = 0xBB,
-                .ir_3 = 0xCC,
-                .temp_0 = 0xDD,
-                .temp_1 = 0xEE,
-                .temp_2 = 0xFF,
-                .temp_3 = 0x00,
-                .humidity = 0x11,
-                .moisture = 0x22
-            };
-            strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
-
-            // total length of advertising data
-            guardener_adv_data.data_size = 1 + guardener_adv_data.adv_len;
-
-            // Provide the BT stack the constructed advertisement packet
-            sc = sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data);
-            app_assert_status(sc);
+            // Initialize the advertiser
+            guardener_init_ble_advertiser();
 
             // Start advertising
             /**
