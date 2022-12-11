@@ -423,6 +423,9 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
 
+    // start the advertisement with the new packet
+    app_assert_status(sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable));
+
     /**
      * Wait 5 minutes - time it takes to collect the data before allowing the
      * application loop to trigger sending another advertisement packet.
@@ -433,10 +436,6 @@ SL_WEAK void app_process_action(void)
         sl_sleeptimer_delay_millisecond(65535 /*max sleep interval*/);
     }
     sl_sleeptimer_delay_millisecond(37860 /*remaining amount of 300000 ms*/);
-
-
-    // start the advertisement with the new packet
-    app_assert_status(sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable));
 
     return;
 }
