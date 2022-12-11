@@ -25,6 +25,16 @@
 // [ETM]$
 
 // $[PTI]
+// PTI DFRAME on PB13
+#define PTI_DFRAME_PORT                          gpioPortB
+#define PTI_DFRAME_PIN                           13
+#define PTI_DFRAME_LOC                           6
+
+// PTI DOUT on PB12
+#define PTI_DOUT_PORT                            gpioPortB
+#define PTI_DOUT_PIN                             12
+#define PTI_DOUT_LOC                             6
+
 // [PTI]$
 
 // $[GPIO]
@@ -122,6 +132,26 @@
 // [TIMER1]$
 
 // $[USART0]
+// USART0 CTS on PA2
+#define USART0_CTS_PORT                          gpioPortA
+#define USART0_CTS_PIN                           2
+#define USART0_CTS_LOC                           30
+
+// USART0 RTS on PA3
+#define USART0_RTS_PORT                          gpioPortA
+#define USART0_RTS_PIN                           3
+#define USART0_RTS_LOC                           30
+
+// USART0 RX on PF3
+#define USART0_RX_PORT                           gpioPortF
+#define USART0_RX_PIN                            3
+#define USART0_RX_LOC                            26
+
+// USART0 TX on PF4
+#define USART0_TX_PORT                           gpioPortF
+#define USART0_TX_PIN                            4
+#define USART0_TX_LOC                            28
+
 // [USART0]$
 
 // $[USART1]

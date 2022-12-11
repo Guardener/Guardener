@@ -1,63 +1,63 @@
 {
     "version": 4,
     "env": {
-        "userHome": "C:${pathSeparator}Users${pathSeparator}Oppa", // windows
-        "sysExt": ".exe", // windows
-        "SILABS_PATH": "C:${pathSeparator}SiliconLabs", // windows
-        "SL_STUDIO": "${SILABS_PATH}${pathSeparator}SimplicityStudio${pathSeparator}v5", // windows
-        "SL_JAVA": "${SL_STUDIO}${pathSeparator}features${pathSeparator}com.silabs.external.java.windows.x86_64.feature_11.0.5${pathSeparator}jre${pathSeparator}bin${pathSeparator}java${sysExt}", // windows
+        // "userHome": "C:${pathSeparator}Users${pathSeparator}Oppa", // windows
+        // "sysExt": ".exe", // windows
+        // "SILABS_PATH": "C:${pathSeparator}SiliconLabs", // windows
+        // "SL_STUDIO": "${SILABS_PATH}${pathSeparator}SimplicityStudio${pathSeparator}v5", // windows
+        // "SL_JAVA": "${SL_STUDIO}${pathSeparator}features${pathSeparator}com.silabs.external.java.windows.x86_64.feature_11.0.5${pathSeparator}jre${pathSeparator}bin${pathSeparator}java${sysExt}", // windows
         
-        // "userHome": "~/", // linux
-        // "sysExt": "", // linux
-        // "SILABS_PATH": "${userHome}${pathSeparator}Downloads${pathSeparator}SimplicityStudio_v5", // linux
-        // "SL_STUDIO": "${SILABS_PATH}", // linux
-        // "SL_CONFIG": "${SL_STUDIO}${pathSeparator}configuration",
-        // "SL_JAVA": "java", // linux
+        "userHome": "~/", // linux
+        "sysExt": "", // linux
+        "SILABS_PATH": "${userHome}${pathSeparator}Downloads${pathSeparator}SimplicityStudio_v5", // linux
+        "SL_STUDIO": "${SILABS_PATH}", // linux
+        "SL_CONFIG": "${SL_STUDIO}${pathSeparator}configuration",
+        "SL_JAVA": "java", // linux
 
         "SL_EQUINOX": "${SL_STUDIO}${pathSeparator}plugins${pathSeparator}org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar",
         "SILABS_TOOLS": "${SL_STUDIO}${pathSeparator}developer${pathSeparator}toolchains${pathSeparator}gnu_arm${pathSeparator}10.3_2021.10${pathSeparator}bin",
         "GECKO_SDK_VER": "gecko_sdk_4.1.3",
         "SL_PROJ_WORKSPACE": "${userHome}${pathSeparator}SimplicityStudio${pathSeparator}v5_workspace",
         "ProjectIncludes": [
-            "${workspaceRoot}/",
-            "${workspaceRoot}/drivers/",
-            "${workspaceRoot}/config/",
-            "${workspaceRoot}/autogen/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/Device/SiliconLabs/EFR32BG13P/Include/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/app/common/util/app_assert/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/common/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/protocol/bluetooth/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/hardware/board/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/bootloader/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/bootloader/api/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/CMSIS/Core/Include/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/hardware/driver/configuration_over_swo/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/driver/debug/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/device_init/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/emlib/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/driver/i2cspm/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/mbedtls/include/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/mbedtls/library/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/sl_component/sl_mbedtls_support/config/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/sl_component/sl_mbedtls_support/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/mpu/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/hardware/driver/mx25_flash_shutdown/inc/sl_mx25_flash_shutdown_usart/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/power_manager/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/sl_component/sl_psa_driver/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/sl_component/sl_psa_driver/inc/public/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/common/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/protocol/ble/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/protocol/ieee802154/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/protocol/zwave/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/chip/efr32/efr32xg1x/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/plugin/pa-conversions/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/radio/rail_lib/plugin/pa-conversions/efr32xg1x/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/silicon_labs/silabs_core/memory_manager/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/common/toolchain/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/system/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/sleeptimer/inc/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/util/third_party/crypto/sl_component/sl_protocol_crypto/src/",
-            "${workspaceRoot}/${GECKO_SDK_VER}/platform/service/udelay/inc/",
+            "${workspaceRoot}${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}drivers${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}config${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}autogen${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}Device${pathSeparator}SiliconLabs${pathSeparator}EFR32BG13P${pathSeparator}Include${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}app${pathSeparator}common${pathSeparator}util${pathSeparator}app_assert${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}common${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}protocol${pathSeparator}bluetooth${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}hardware${pathSeparator}board${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}bootloader${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}bootloader${pathSeparator}api${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}CMSIS${pathSeparator}Core${pathSeparator}Include${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}hardware${pathSeparator}driver${pathSeparator}configuration_over_swo${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}driver${pathSeparator}debug${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}device_init${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}emlib${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}driver${pathSeparator}i2cspm${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}mbedtls${pathSeparator}include${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}mbedtls${pathSeparator}library${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}sl_component${pathSeparator}sl_mbedtls_support${pathSeparator}config${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}sl_component${pathSeparator}sl_mbedtls_support${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}mpu${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}hardware${pathSeparator}driver${pathSeparator}mx25_flash_shutdown${pathSeparator}inc${pathSeparator}sl_mx25_flash_shutdown_usart${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}power_manager${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}sl_component${pathSeparator}sl_psa_driver${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}sl_component${pathSeparator}sl_psa_driver${pathSeparator}inc${pathSeparator}public${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}common${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}protocol${pathSeparator}ble${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}protocol${pathSeparator}ieee802154${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}protocol${pathSeparator}zwave${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}chip${pathSeparator}efr32${pathSeparator}efr32xg1x${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}plugin${pathSeparator}pa-conversions${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}radio${pathSeparator}rail_lib${pathSeparator}plugin${pathSeparator}pa-conversions${pathSeparator}efr32xg1x${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}silicon_labs${pathSeparator}silabs_core${pathSeparator}memory_manager${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}common${pathSeparator}toolchain${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}system${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}sleeptimer${pathSeparator}inc${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}util${pathSeparator}third_party${pathSeparator}crypto${pathSeparator}sl_component${pathSeparator}sl_protocol_crypto${pathSeparator}src${pathSeparator}",
+            "${workspaceRoot}${pathSeparator}${GECKO_SDK_VER}${pathSeparator}platform${pathSeparator}service${pathSeparator}udelay${pathSeparator}inc${pathSeparator}",
             ""
         ],
         "ProjectDefines": [
@@ -79,10 +79,10 @@
             "name": "Simplicity Studio C/C++",
             "includePath": [ "${ProjectIncludes}" ],
             "defines": [ "${ProjectDefines}" ],
-            "compileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
+            // "compileCommands": "${workspaceFolder}${pathSeparator}.vscode${pathSeparator}compile_commands.json",
             // ^^^ Can be used in lieu of "includePath" & "defines" ^^^
             "browse": {
-                "databaseFilename": "${workspaceRoot}/.vscode/BROWSE.VC.DB",
+                "databaseFilename": "${workspaceRoot}${pathSeparator}.vscode${pathSeparator}BROWSE.VC.DB",
                 "limitSymbolsToIncludedHeaders": false,
                 // ^^^ true to only find headers via their paths, false to search for them in the paths provided below
                 "path": [ "${ProjectIncludes}" ]
@@ -90,7 +90,7 @@
             "cStandard": "c11",
             "cppStandard": "c++14",
             "intelliSenseMode": "gcc-arm",
-            "compilerPath": "${SILABS_TOOLS}/arm-none-eabi-gcc",
+            "compilerPath": "${SILABS_TOOLS}${pathSeparator}arm-none-eabi-gcc",
             "customConfigurationVariables": { // Set here and use ${cpptools:<var>} in tasks.json or launch.json
                 "BUILD_CONFIGURATION": "GNU ARM v10.3.1 - Default",
                 "SL_JAVA": "${SL_JAVA}",

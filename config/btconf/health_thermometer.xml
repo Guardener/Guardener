@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--Custom Gatt Config-->
+<gatt gatt_caching="false" generic_attribute_service="false" header="gatt_db.h" name="Custom Gatt Config" out="gatt_db.c" prefix="gattdb_"/>

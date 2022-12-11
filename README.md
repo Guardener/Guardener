@@ -1,39 +1,47 @@
-# SoC - iBeacon
+# SoC - Thermometer
 
-An iBeacon device is an implementation that sends non-connectable advertisements in iBeacon format. The iBeacon Service gives Bluetooth accessories a simple and convenient way to send iBeacon to smartphones. This example can be tested together with the EFR Connect mobile app.
+This example implements the Health Thermometer service. It enables a peer device to connect and receive temperature values via Bluetooth. The reported values are measured by a temperature sensor located on the mainboard.
 
 > Note: this example expects a specific Gecko Bootloader to be present on your device. For details see the Troubleshooting section.
 
 ## Getting Started
 
-Introduced in iOS 7, iBeacon enables new location awareness possibilities for apps. Leveraging Bluetooth Low Energy (BLE), a device with iBeacon technology can be used to establish a region around an object. This allows an iOS device to determine when it has entered or left the region, along with an estimation of proximity to a Guardener.
-
-For more Guardener information, see [Apple iBeacon](https://developer.apple.com/iGuardener/)
-
 To get started with Silicon Labs Bluetooth and Simplicity Studio, see [QSG169: Bluetooth SDK v3.x Quick Start Guide](https://www.silabs.com/documents/public/quick-start-guides/qsg169-bluetooth-sdk-v3x-quick-start-guide.pdf).
 
-To run this example, you will need:
+This example implements the predefined [Thermometer Service](https://www.bluetooth.com/xml-viewer/?src=https://www.bluetooth.com/wp-content/uploads/Sitecore-Media-Library/Gatt/Xml/Services/org.bluetooth.service.health_thermometer.xml). To run this example, you will need:
 
-- Any Bluetooth Low Energy-compatible [radio board](https://www.silabs.com/wireless/bluetooth),
-- A smartphone with [EFR Connect app](https://www.silabs.com/developers/efr-connect-mobile-app) installed. (Note: On Android, the distance will not be calculated.)
+- A mainboard with Bluetooth Low Energy-compatible [radio board](https://www.silabs.com/wireless/bluetooth).
+- An *[iOS](https://itunes.apple.com/us/app/silicon-labs-blue-gecko-wstk/id1030932759?mt=8)* or *[Android](https://play.google.com/store/apps/details?id=com.siliconlabs.bledemo)* smartphone with EFR Connect app installed.
 
 The following picture shows the system view of how it works.
 
-![SoC-iBeacon-Overview](readme_img1.png)
+![System View](readme_img1.png)
 
-Follow these steps to set up the project:
+Follow these steps to get the temperature value on your smartphone.
 
-1. Create the SoC-iBeacon project based on your hardware, then build and flash the image to your board. Alternatively, you could flash the pre-built demo image.
+1. Create the soc-thermometer project based on your hardware, then build and flash the image to your board. Alternatively, you could flash the pre-built demo image.
 
-   ![create-project](readme_img2.png)
+![step 1](readme_img2.png)
 
 2. Open the *EFR Connect* app on your smartphone and allow the permission requested the first time it is opened.
 
-3. Click [Develop] -> [Browser]. You will see a list of nearby devices that are sending Bluetooth advertisement. Find the one named "iBeacon" .
+3. Click [Develop] -> [Browser]. You will see a list of nearby devices that are sending Bluetooth advertisement. Find the one named "Thermometer Example" and click the `connect` button on the right side.
 
-   ![create-project](readme_img3.png)
+![step 3](readme_img3.png)
 
-   You can also see the Minor, Major, and UUID number, and the EFR app will estimate the distance. (Note: On Android, the distance will not be calculated.)
+4. Wait for the connection to establish and GATT database to be loaded, then find the *Health Thermometer* service, and click `More Info`.
+
+![step 4](readme_img4.png)
+
+5. Four characteristics will show up. Find the *Temperature Measurement* and press the `indicate` button. Then, you will see the temperature value getting updated periodically. You should also see the temperature displayed change as you press the top of the sensor with your finger, as shown below. If your board is not connected to a temperature sensor (e.g., because of a limited number of available pins), a generated value will be shown which changes 1 degree Celsius every second.
+
+![step 5](readme_img5.png)
+![Finger on sensor](readme_img6.PNG)
+
+Alternatively, you can follow the steps below instead of steps 3-5 to use the Health Thermometer feature in the app. This will automatically scan and list devices advertising the Health Thermometer service and, upon connection, will automatically enable notifications and display the temperature data.
+
+![Alternative 1](readme_img7.PNG)
+![Alternative 2](readme_img8.PNG)
 
 ## Troubleshooting
 
@@ -84,7 +92,7 @@ Before programming the radio board mounted on the mainboard, make sure the power
 
 [Bluetooth Training](https://www.silabs.com/support/training/bluetooth)
 
-[Getting-Started-with-iBeacon](https://developer.apple.com/iGuardener/Getting-Started-with-iBeacon.pdf)
+[Bluetooth SIG thermometer profile specification](https://www.bluetooth.org/docman/handlers/downloaddoc.ashx?doc_id=238687&_ga=2.28821308.120082263.1538382903-201228904.1529395147)
 
 ## Report Bugs & Get Support
 
