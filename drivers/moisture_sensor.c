@@ -153,11 +153,11 @@ uint8_t ms_get_moisture_lvl(uint32_t millivolts)
     }
     else
     {
-        app_log_warning("Moisture Sensor is not yet calibrated; Using default values...");
-        app_log_nl();
-        uint32_t mVwet = 1100, mVdry = 2065;
+        uint32_t mVwet = 1100, mVdry = 2075;
         uint8_t percentDry = ((millivolts - mVwet) * 100) / (mVdry - mVwet);
         level = 100 - percentDry;
+        app_log_warning("Moisture Sensor is not yet calibrated; Used default values resulting with %d", level);
+        app_log_nl();
     }
 
     return level;

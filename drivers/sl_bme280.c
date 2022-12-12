@@ -18,7 +18,6 @@
 #include "bme280.h"
 #include "sl_sleeptimer.h"
 #include "app_log.h"
-#include <stdbool.h>
 #include <math.h>
 
 #ifdef app_log_debug
@@ -36,7 +35,7 @@
 #endif
 
 // For relative humidity adjusting/calibrating
-#define OFFSET 58
+#define OFFSET 41 //58
 #define SCALING 0.00454
 
 static bool bme280_initialized_s = false, bme280_asleep = false;
@@ -118,10 +117,8 @@ int8_t sl_bme280_write_register(uint8_t reg_addr, const uint8_t *data, uint32_t 
     return ret;
 }
 
-uint8_t sl_bme280_convert_bme2RH(float humi)
+float sl_bme280_convert_bme2RH(float humi)
 {
-    uint8_t scaled_humid = -1; // not a possible return value. Acts as an error
-
     // Amber: I came up with (0.13303 + 0.02017 x) / 0.653182 - 0.0612587 x)
     #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("RAW DATA BME280 acquired: %0.2lf", humi);
@@ -133,14 +130,14 @@ uint8_t sl_bme280_convert_bme2RH(float humi)
     #endif
 
     const float a = 0.5556, b = 1.85;
-    scaled_humid = (a * log( b - (humi - OFFSET) )) * 100;
+    float scaled_humid = (a * log( b - (humi - OFFSET) )) * 100;
 
     #if !APP_LOG_LEVEL_MASK_DEBUG
     app_log_debug("BME280 humidity scaled to %d%% RH", scaled_humid);
     app_log_nl();
     #endif
 
-    return (scaled_humid > 100) ? -1 /* failure */ : scaled_humid;
+    return scaled_humid;
 }
 
 sl_status_t sl_bme280_force_get_readings(float *temp, float* pres, float* humi)
@@ -191,6 +188,14 @@ sl_status_t sl_bme280_force_get_readings(float *temp, float* pres, float* humi)
         #endif
     }
     if (humi != NULL) {
+        // Take another reading
+        struct bme280_data comp_data;
+        int8_t ret = bme280_get_sensor_data(BME280_HUM, &comp_data, &dev_s);
+        if (ret != BME280_OK) {
+            app_log_error("Failed to get sensor data (code %+d).", ret);
+            app_log_nl();
+            return SL_STATUS_FAIL;
+        }
         *humi = (float)comp_data.humidity;
         #if !APP_LOG_LEVEL_MASK_DEBUG
         app_log_debug("BME280 acquired %0.2lf%%", *humi);
@@ -249,6 +254,11 @@ sl_status_t sl_bme280_force_get_readings(float *temp, float* pres, float* humi)
     }
 
     return SL_STATUS_OK;
+}
+
+bool sl_bme280_is_asleep(void)
+{
+    return bme280_asleep;
 }
 
 sl_status_t sl_bme280_wake_up_device()

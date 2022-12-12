@@ -52,11 +52,22 @@
 #include "moisture_sensor.h"
 #include "sl_button.h"
 
+#define SHORT_PRESS 2000
+#define LONG_PRESS 20000
+#define DEBUG_IC_STATES 0
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+#include "sl_power_manager.h"
+#if DEBUG_IC_STATES
+#include "sl_power_manager_config.h"
+#include "gecko_sdk_4.1.3/platform/service/power_manager/src/sli_power_manager_private.h"
+#endif // DEBUG_IC_STATES
+#endif // SL_CATALOG_POWER_MANAGER_PRESENT
+
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
-#define SHORT_PRESS 2000
-#define LONG_PRESS 20000
+// For printing errors
+static char ret_buff[32] = {'\0'};
 
 // floats are 32-bit
 typedef struct {
@@ -219,6 +230,13 @@ SL_WEAK void app_init(void)
         while(true); // crash here
     }
 
+    // Init process already sets BME280 to sleep, this is a sanity check
+    if (sl_bme280_put_to_sleep() != SL_STATUS_OK)
+    {
+        app_log_error("Failed to put BME280 to sleep");
+        app_log_nl();
+    }
+
     // Initialize Moisture Sensor
     moisture_sensor_cfg_t ms_cfg = { // @formatter:off
         .pwm = sl_pwm_500k,
@@ -279,7 +297,7 @@ static inline void guardener_init_ble_advertiser()
 
     /* Construct the advertisement packet with our desired initial data */
     // 1+2+19 bytes for type, company ID, and the payload
-    guardener_adv_data.adv_len = 22;
+    guardener_adv_data.adv_len = 3+APP_DATA_BYTES;
     guardener_adv_data.adv_type = 0xFF; // Manufacture Custom
     guardener_adv_data.mfr_id_LO = 0xBA;
     guardener_adv_data.mfr_id_HI = 0xBE;
@@ -318,6 +336,82 @@ static inline void guardener_init_ble_advertiser()
     app_assert_status(sc);
 }
 
+
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+#if (SL_POWER_MANAGER_LOWEST_EM_ALLOWED != 1) && DEBUG_IC_STATES
+// Table of energy modes counters. Each counter indicates the presence (not zero)
+// or absence (zero) of requirements on a given energy mode. The table doesn't
+// contain requirement on EM0.
+static uint8_t requirement_em_table[SLI_POWER_MANAGER_EM_TABLE_SIZE] = {
+  0,  // EM1 requirement counter
+  0,  // EM2 requirement counter
+};
+/***************************************************************************//**
+ * Get lowest energy mode to apply given the requirements on the different
+ * energy modes.
+ *
+ * @return  Lowest energy mode: EM1, EM2 or EM3.
+ *
+ * @note If no requirement for any energy mode (EM1 and EM2), lowest energy mode
+ * is EM3.
+ ******************************************************************************/
+static sl_power_manager_em_t get_lowest_em(void)
+{
+  uint32_t em_ix;
+  sl_power_manager_em_t em;
+
+  // Retrieve lowest Energy mode allowed given the requirements
+  for (em_ix = 1; (em_ix < SL_POWER_MANAGER_LOWEST_EM_ALLOWED) && (requirement_em_table[em_ix - 1] == 0); em_ix++) {
+    ;
+  }
+
+  em = (sl_power_manager_em_t)em_ix;
+
+  return em;
+}
+#endif
+static inline void update_and_enter_sleep_state(sl_power_manager_em_t em_new, bool add_new, sl_power_manager_em_t em_old, bool remove_old)
+{
+    if (remove_old)
+    {
+        // Remove the restriction
+        sl_power_manager_remove_em_requirement(em_old);
+    }
+
+    if (add_new)
+    {
+        // Restrict the system from entering energy mode EM3 or lower
+        sl_power_manager_add_em_requirement(em_new);
+    }
+
+    // Sleep to the lowest set EM state
+    sl_power_manager_sleep();
+#if DEBUG_IC_STATES // Debug only, extra time = extra power
+    switch(get_lowest_em())
+    {
+        case SL_POWER_MANAGER_EM0:
+            app_log_debug("MCU in EM0");
+            break;
+        case SL_POWER_MANAGER_EM1:
+            app_log_debug("MCU in EM1");
+            break;
+        case SL_POWER_MANAGER_EM2:
+            app_log_debug("MCU in EM2");
+            break;
+        case SL_POWER_MANAGER_EM3:
+            app_log_debug("MCU in EM3");
+            break;
+        case SL_POWER_MANAGER_EM4:
+            app_log_debug("MCU in EM4");
+            break;
+        default:
+            break;
+    }
+    app_log_nl();
+#endif // DEBUG_IC_STATES
+}
+#endif // defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+
 #ifndef SL_CATALOG_KERNEL_PRESENT
 /**************************************************************************//**
  * Application Process Action.
@@ -330,33 +424,106 @@ SL_WEAK void app_process_action(void)
         return;
     }
 
+    /**
+     * I2C can enter EM3
+     * BLE can enter EM1
+     * PWM can enter EM2
+     * ADC can enter EM3
+     */
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+    // Reset limits
+    sl_power_manager_remove_em_requirement(SL_POWER_MANAGER_EM3);
+    sl_power_manager_remove_em_requirement(SL_POWER_MANAGER_EM2);
+    sl_power_manager_remove_em_requirement(SL_POWER_MANAGER_EM1);
+    // preping the ble packets can be done in EM3
+    update_and_enter_sleep_state(SL_POWER_MANAGER_EM3, true, 0/*ignored*/, false);
+#endif
+
     // reinitialize the advertiser
     guardener_init_ble_advertiser();
 
     /**
      * Acquire all the data to be broadcast
      */
+    sl_status_t ret = SL_STATUS_OK;
+#if DEBUG_IC_STATES // Debug only, extra time = extra power
+    // Verify the Si1145 is actually in sleep state
+    uint8_t response;
+    ret = si1145_read_register(SL_I2CSPM_SI1145_PERIPHERAL, SI1145_REG_RESPONSE, &response);
+    if (ret == SL_STATUS_OK)
+    {
+        switch (response & SI1145_RSP0_CHIPSTAT_MASK)
+        {
+            case SI1145_RSP0_SLEEP:
+                app_log_info("Si1145 is asleep");
+                break;
 
+            case SI1145_RSP0_SUSPEND:
+                app_log_info("Si1145 is suspended");
+                break;
+
+            case SI1145_RSP0_RUNNING:
+                app_log_info("Si1145 is actively running");
+                break;
+        }
+        app_log_nl();
+    }
+    else
+    {
+        sl_status_to_string(ret, ret_buff, 32);
+        app_log_error("Failed to I2C read if Si1145's current state: %s", ret_buff);
+        app_log_nl();
+    }
+#endif // DEBUG_IC_STATES
+
+    // I2C can be done in EM3, we do not need to remove or update the EM
     // Acquire Si1145's Readings
     float lux, uvi, ir;
-    if(si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15) != SL_STATUS_OK)
+    ret = si1145_get_lux_uvi_ir(&lux, &uvi, &ir, 15);
+    if(ret != SL_STATUS_OK)
     {
-        app_log_error("Failed to acquire lux, uvi, and ir readings");
+        sl_status_to_string(ret, ret_buff, 32);
+        app_log_error("Failed to acquire lux, uvi, and ir readings: %s", ret);
         app_log_nl();
-        while(true); // crash here
     }
     else if(!calibrating)
     {
         app_log_info("lux=%0.2lf, uvi=%0.2lf, ir=%0.2lf", lux, uvi, ir);
+        app_log_nl();
     }
 
+#if DEBUG_IC_STATES
+    // Si1145 should go to sleep after getting a reading, this is a sanity check to make sure it goes back to sleep
+    ret = si1145_wait_until_sleep(SL_I2CSPM_SI1145_PERIPHERAL);
+    if (ret != SL_STATUS_OK)
+    {
+        sl_status_to_string(ret, ret_buff, 32);
+        app_log_error("Failed to put the Si1145 to sleep: %s", ret_buff);
+        app_log_nl();
+    }
+#endif // DEBUG_IC_STATES
+
+#if DEBUG_IC_STATES
+    // Verify the BME280 is actually in sleep state
+    if (sl_bme280_is_asleep())
+    {
+        app_log_info("BLE280 is asleep");
+        app_log_nl();
+    }
+    else
+    {
+        app_log_info("BLE280 is awake");
+        app_log_nl();
+    }
+#endif // DEBUG_IC_STATES
+
+    // We should still be in EM3, we don't need to update EM yet
     // Acquire BME280's Readings
     float temps, humid;
     if(sl_bme280_force_get_readings(&temps, NULL, &humid) != SL_STATUS_OK)
     {
         app_log_error("Failed to acquire temperature, pressure, and humidity readings");
         app_log_nl();
-        while(true); // crash here
     }
     else if(!calibrating)
     {
@@ -364,11 +531,23 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
 
-    // Should still be in EM3, processing the data can still be done in EM3
-    float hum = sl_bme280_convert_bme2RH(humid); // returns NAN
+#if DEBUG_IC_STATES
+    ret = sl_bme280_put_to_sleep();
+    if (ret != SL_STATUS_OK)
+    {
+        sl_status_to_string(ret, ret_buff, 32);
+        app_log_error("Failed to put the BME280 to sleep: %s", ret_buff);
+        app_log_nl();
+    }
+#endif // DEBUG_IC_STATES
 
-//    // CIP: BME280 reads an extra 22.36 %RH for me, subtracting it from the reading
-//    uint8_t humid_lvl = (uint8_t)((float)humid - (float)22.36);
+    // Should still be in EM3, processing the data can still be done in EM3
+//    float hum = sl_bme280_convert_bme2RH(humid); // returns NAN
+
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+    // PWM needs EM2 in order to work
+    update_and_enter_sleep_state(SL_POWER_MANAGER_EM2, true, SL_POWER_MANAGER_EM3, true);
+#endif
 
     // Acquire Moisture Sensor's millivolt Readings
     uint32_t mvolts = ms_get_millivolts();
@@ -376,7 +555,6 @@ SL_WEAK void app_process_action(void)
     {
         app_log_error("Failed to acquire moisture sensor value");
         app_log_nl();
-        while(true); // crash here
     }
     else if((!calibrating) && (curr_cal_state != CAL_OK))
     {
@@ -385,6 +563,11 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
     
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+    // Higher state no longer needed, drop back to lower state
+    update_and_enter_sleep_state(SL_POWER_MANAGER_EM3, true, SL_POWER_MANAGER_EM2, true);
+#endif
+
     // Acquire Moisture Sensor's calibrated state
     moisture_get_cal_state(&curr_cal_state);
     uint8_t ms_calib = (uint8_t)curr_cal_state;
@@ -439,6 +622,10 @@ SL_WEAK void app_process_action(void)
 
     /* Update the custom advertising packet's payload */
     update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, humid, moisture_lvl, ms_calib);
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+    // BLE needs at least EM2 in order to broadcast
+    update_and_enter_sleep_state(SL_POWER_MANAGER_EM2, true, SL_POWER_MANAGER_EM3, true);
+#endif
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
@@ -447,6 +634,11 @@ SL_WEAK void app_process_action(void)
 
     // start the advertisement with the new packet
     app_assert_status(sl_bt_legacy_advertiser_start(advertising_set_handle, sl_bt_advertiser_connectable_scannable));
+
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+    // Enter deepest sleep now that application process is done (remove EM2 limit from above)
+    update_and_enter_sleep_state(SL_POWER_MANAGER_EM3, true, SL_POWER_MANAGER_EM2, true);
+#endif
 
     /**
      * Wait 5 minutes - time it takes to collect the data before allowing the

@@ -22,6 +22,7 @@
 #include "sl_i2cspm.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cpluspluc
 extern "C" {
@@ -116,10 +117,17 @@ sl_status_t sl_bme280_put_to_sleep(void);
 */
 sl_status_t sl_bme280_wake_up_device(void);
 
+/**
+ * @brief Checks if BME280 is in sleep mode
+ *
+ * @return bool true if BME280 is asleep
+*/
+bool sl_bme280_is_asleep(void);
+
 /*!
  * @brief Convert BME280's float humidity reading to 0-100 % RH
  */
-uint8_t sl_bme280_convert_bme2RH(float humi);
+float sl_bme280_convert_bme2RH(float humi);
 
 #ifdef __cpluspluc
 }

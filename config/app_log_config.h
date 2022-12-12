@@ -62,7 +62,7 @@
 
 // <e APP_LOG_ENABLE> Application Logging
 // <i> Enables Logging.
-#define APP_LOG_ENABLE            0
+#define APP_LOG_ENABLE            1
 
 // <h> General
 
@@ -93,7 +93,7 @@
 
 // <e APP_LOG_LEVEL_FILTER_ENABLE> Threshold filter
 // <i> Enable simple filter for log levels
-#define APP_LOG_LEVEL_FILTER_ENABLE            1
+#define APP_LOG_LEVEL_FILTER_ENABLE            0
 
 // <o APP_LOG_LEVEL_FILTER_THRESHOLD> Threshold
 // <APP_LOG_LEVEL_DEBUG=> DEBUG

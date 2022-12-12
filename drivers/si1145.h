@@ -77,6 +77,8 @@ extern "C" {
 #define SI1145_RSP0_CHIPSTAT_MASK       (0x07)
 #define SI1145_RSP0_COUNTER_MASK        (0xF8)
 #define SI1145_RSP0_SLEEP               (0x01)
+#define SI1145_RSP0_SUSPEND             (0x02)
+#define SI1145_RSP0_RUNNING             (0x04)
 
 /**************************************************************************//**
  * @brief Si1145 Register Parameters; Parameters explicitly defined for registers
@@ -438,6 +440,18 @@ sl_status_t si1145_pause_measurement(sl_i2cspm_t* i2cspm);
  *    function.
  ******************************************************************************/
 sl_status_t si1145_set_parameter(sl_i2cspm_t* i2cspm, uint8_t address, uint8_t value);
+
+/***************************************************************************/ /**
+ * @brief
+ *    Waits until the Si1145 is sleeping
+ *before proceeding
+ *
+ * @return
+ *    @ret SL_STATUS_OK Success
+ *    @ret SL_STATUS_TRANSMIT I2C transmit
+ *failure
+ ******************************************************************************/
+sl_status_t si1145_wait_until_sleep(sl_i2cspm_t *i2cspm);
 
 #ifdef __cplusplus
 }

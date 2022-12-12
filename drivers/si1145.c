@@ -430,14 +430,7 @@ sl_status_t si1145_read_register_block(sl_i2cspm_t *i2cspm, uint8_t reg, uint8_t
 }
 
 /***************************************************************************/ /**
- * @brief
- *    Waits until the Si1145 is sleeping
- *before proceeding
- *
- * @return
- *    @ret SL_STATUS_OK Success
- *    @ret SL_STATUS_TRANSMIT I2C transmit
- *failure
+ * @brief Waits until the Si1145 is sleeping before proceeding
  ******************************************************************************/
 sl_status_t si1145_wait_until_sleep(sl_i2cspm_t *i2cspm) {
     uint8_t response;

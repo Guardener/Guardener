@@ -185,6 +185,9 @@ uint8_t app_log_filter_threshold_get(void);
  ******************************************************************************/
 uint8_t app_log_filter_mask_get(void);
 
+/* translate code to printable string */
+void sl_status_to_string(sl_status_t status, char *buffer, uint32_t buffer_length);
+
 // -----------------------------------------------------------------------------
 // Logging macro definitions
 

@@ -54,6 +54,12 @@ int main(void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+
+#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+  // Set the lowest Energy Mode
+  sl_power_manager_add_em_requirement(SL_POWER_MANAGER_EM3);
+#endif
+
   while (1) {
     // Do not remove this call: Silicon Labs components process action routine
     // must be called from the super loop.
@@ -62,10 +68,11 @@ int main(void)
     // Application process.
     app_process_action();
 
-#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-    // Let the CPU go to sleep if the system allows it.
-    sl_power_manager_sleep();
-#endif
+    // Now manually handled by application code
+//#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
+//    // Let the CPU go to sleep if the system allows it.
+//    sl_power_manager_sleep();
+//#endif
   }
 #endif // SL_CATALOG_KERNEL_PRESENT
 }
