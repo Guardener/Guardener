@@ -76,12 +76,16 @@ typedef struct {
     uint8_t temp_1;
     uint8_t temp_2;
     uint8_t temp_3;
-    uint8_t humidity; // 0 to 255 percent relative humidity
+    uint8_t hum_0;
+    uint8_t hum_1;
+    uint8_t hum_2;
+    uint8_t hum_3;
     uint8_t moisture; // 0 to 255 percent saturation
+    uint8_t ms_calib_state;
 } guardener_app_data_t;
 
 // The advertisement data structure
-#define APP_DATA_BYTES  (18)
+#define APP_DATA_BYTES  (22)
 typedef struct {
     // length of the type + flags + payload
     uint8_t adv_len;
@@ -113,12 +117,13 @@ static inline void float_to_bytes(float * f_ptr, uint8_t * payload_data) {
     payload_data[3] = encoder.bytes[3];
 }
 
-static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, float _u, float _i, float _t, uint8_t _h, uint8_t _m) {
-    uint8_t _lux[4], _uvi[4], _ir[4], _tem[4];
+static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, float _u, float _i, float _t, float _h, uint8_t _m, uint8_t _c) {
+    uint8_t _lux[4], _uvi[4], _ir[4], _tem[4], _hum[4];
     float_to_bytes(&_l, _lux);
     float_to_bytes(&_u, _uvi);
     float_to_bytes(&_i, _ir);
     float_to_bytes(&_t, _tem);
+    float_to_bytes(&_h, _hum);
     int i = 0;
     for (int j=0; j<4; j++) {
         adv_data->payload[i++] = _lux[j];
@@ -132,17 +137,28 @@ static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, f
     for (int j=0; j<4; j++) {
         adv_data->payload[i++] = _tem[j];
     }
-    adv_data->payload[i++] = _h;
+    for (int j=0; j<4; j++) {
+        adv_data->payload[i++] = _hum[j];
+    }
     adv_data->payload[i++] = _m;
-    
-    app_log_warning("Client should receive 0x%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X; Translated to:\n\r"
-                    "lux=%.3f; uvi=%.3f; ir=%.3f; temp=%.3f C; humidity=%d%% RH; moisture=%d%% saturation",
+    adv_data->payload[i++] = _c;
+
+    app_log_info("Client should receive 0x"
+                    "%.2X%.2X%.2X%.2X" // lux
+                    "%.2X%.2X%.2X%.2X" // uvi
+                    "%.2X%.2X%.2X%.2X" // ir
+                    "%.2X%.2X%.2X%.2X" // temp
+                    "%.2X%.2X%.2X%.2X" // humid
+                    "%.2X%.2X", // moisture && calibration state
                     adv_data->payload[0], adv_data->payload[1], adv_data->payload[2], adv_data->payload[3], // lux
                     adv_data->payload[4], adv_data->payload[5], adv_data->payload[6], adv_data->payload[7], // uvi
                     adv_data->payload[8], adv_data->payload[9], adv_data->payload[10], adv_data->payload[11], // ir
                     adv_data->payload[12], adv_data->payload[13], adv_data->payload[14], adv_data->payload[15], // temp
-                    adv_data->payload[16], adv_data->payload[17], // humidity and moisture
-                    _l, _u, _i, _t, _h, _m); // non hex values
+                    adv_data->payload[16], adv_data->payload[17], adv_data->payload[18], adv_data->payload[19], // humidity
+                    adv_data->payload[20], adv_data->payload[21]); // moisture && calibration state
+    app_log_nl();
+    app_log_info("Translated to: lux=%.3f; uvi=%.3f; ir=%.3f; temp=%.3f C; humidity=%.3f%% RH; moisture=%d%% saturation; ms calib=%d",
+                 _l, _u, _i, _t, _h, _m, _c);
     app_log_nl();
 }
 
@@ -285,10 +301,14 @@ static inline void guardener_init_ble_advertiser()
         .temp_1 = 0xEE,
         .temp_2 = 0xFF,
         .temp_3 = 0x00,
-        .humidity = 0x11,
-        .moisture = 0x22
+        .hum_0 = 0x11,
+        .hum_1 = 0x22,
+        .hum_2 = 0x33,
+        .hum_3 = 0x44,
+        .moisture = 0x55,
+        .ms_calib_state = 0x66
     };
-    strncpy((char *)guardener_adv_data.payload, (char *)&app_data, sizeof(app_data));
+    strncpy((char *)guardener_adv_data.payload, (char *)&app_data, APP_DATA_BYTES);
 
     // total length of advertising data
     guardener_adv_data.data_size = 1 + guardener_adv_data.adv_len;
@@ -344,12 +364,8 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
 
-    uint8_t humid_lvl = sl_bme280_convert_bme2RH(humid);
-    if (humid_lvl == (uint8_t)-1)
-    {
-        app_log_error("Failed to scale BME280's humidity reading. Got \"%d\"", humid_lvl);
-        app_log_nl();
-    }
+    // Should still be in EM3, processing the data can still be done in EM3
+    float hum = sl_bme280_convert_bme2RH(humid); // returns NAN
 
 //    // CIP: BME280 reads an extra 22.36 %RH for me, subtracting it from the reading
 //    uint8_t humid_lvl = (uint8_t)((float)humid - (float)22.36);
@@ -369,8 +385,11 @@ SL_WEAK void app_process_action(void)
         app_log_nl();
     }
     
-    // Acquire Moisture Sensor's Percent Saturation Readings
+    // Acquire Moisture Sensor's calibrated state
     moisture_get_cal_state(&curr_cal_state);
+    uint8_t ms_calib = (uint8_t)curr_cal_state;
+
+    // Acquire Moisture Sensor's Percent Saturation Readings
     uint8_t moisture_lvl = ms_get_moisture_lvl(mvolts);
     if(curr_cal_state == CAL_OK)
     {
@@ -419,7 +438,7 @@ SL_WEAK void app_process_action(void)
     }
 
     /* Update the custom advertising packet's payload */
-    update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, humid_lvl, moisture_lvl);
+    update_adv_packet(&guardener_adv_data, lux, uvi, ir, temps, humid, moisture_lvl, ms_calib);
     if (sl_bt_legacy_advertiser_set_data(advertising_set_handle, 0, guardener_adv_data.data_size, (const uint8_t*)&guardener_adv_data) != SL_STATUS_OK)
     {
         app_log_error("Failed to set advertising data");
