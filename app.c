@@ -147,7 +147,7 @@ static inline void update_adv_packet(guardener_adv_data_t *adv_data, float _l, f
 }
 
 // Moisture calibration state flag
-moisture_cal_state_t curr_cal_state = CAL_DRY;
+moisture_cal_state_t curr_cal_state = CAL_OK;
 
 // Button state.
 static volatile bool usr_btn_pressed = false, interrupt_triggered = false, calibrating = false;
@@ -434,13 +434,14 @@ SL_WEAK void app_process_action(void)
      * application loop to trigger sending another advertisement packet.
      */
 //    sl_sleeptimer_delay_millisecond(5000); // test wait
-    for (int i = 0; i<4; i++)
-    {
-        sl_sleeptimer_delay_millisecond(65535 /*max sleep interval*/);
-    }
-    sl_sleeptimer_delay_millisecond(37860 /*remaining amount of 300000 ms*/
-                                    - 350 /* roughly the time it takes to acquire data*/);
+//    for (int i = 0; i<4; i++)
+//    {
+//        sl_sleeptimer_delay_millisecond(65535 /*max sleep interval*/);
+//    }
+  //  sl_sleeptimer_delay_millisecond(37860 /*remaining amount of 300000 ms*/
+  //                                  - 350 /* roughly the time it takes to acquire data*/);
 
+    sl_sleeptimer_delay_millisecond(5000);
     return;
 }
 #endif

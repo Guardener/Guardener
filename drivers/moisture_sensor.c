@@ -43,13 +43,13 @@ static sl_status_t ret = SL_STATUS_OK;
 #endif
 
 static bool moisture_sensor_initialized = false;
-static bool moisture_sensor_calibrated = false;
+static bool moisture_sensor_calibrated = true;
 static sl_pwm_instance_t pwm_instance = {0};
 static ADC_TypeDef *adc_instance = 0;
 static volatile uint32_t sample;
 static volatile uint32_t millivolts;
-moisture_cal_state_t ms_cal_state;
-static float scaling_factor;
+moisture_cal_state_t ms_cal_state = CAL_OK;
+static float scaling_factor = 0.11;
 const float MAX_VAL = 100.0;
 
 // For moisture cal
@@ -145,11 +145,17 @@ uint8_t ms_get_moisture_lvl(uint32_t millivolts)
             level = 0;
         }
 
-        if(level > 100)
+
+
+        if(level >= 100)
         {
-            level = 100;
+            level = 0;
         }
-        level = 100 - level;
+        else
+        {
+            level = 100 - level;
+        }
+
     }
     else
     {
